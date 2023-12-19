@@ -19,6 +19,8 @@ int main(){
         sf::RectangleShape cell(sf::Vector2f(PIXELS_PER_CELL - 1, PIXELS_PER_CELL - 1));
         cell.setFillColor(grey_background);
 
+
+
         window.clear();
 
         for(int i = 0; i < WINDOW_WIDTH; i++){
