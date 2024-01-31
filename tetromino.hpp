@@ -2,17 +2,16 @@
 #define TETROMINOS_H
 
 #include <SFML/System.hpp>
+#include <SFML/System/Vector2.hpp>
+#include <SFML/Graphics.hpp>
 #include <vector>
 
-
-
-typedef vector<vector<bool> > MatrixShape;
-
+typedef std::vector<std::vector<bool>> MatrixShape;
 
 class Tetromino 
 {
     public: 
-        Tetromino(int t, int o, sf::vector2i pos );
+        Tetromino(int t, int o, sf::Vector2f pos);
         Tetromino (int t, int o);
         Tetromino();
         virtual ~Tetromino();
@@ -21,8 +20,8 @@ class Tetromino
         void setTypePiece(int type);
         int getOrientation();
         void setOrientation(int o);
-        sf::Vector2i getPosition();
-        void setPosition(sf::Vector2i pos);
+        sf::Vector2f getPosition();
+        void setPosition(sf::Vector2f pos);
 
         sf::Color getColor();
         MatrixShape getMatrixShape();
@@ -30,14 +29,10 @@ class Tetromino
         static const bool pieces[7][4][4][4];
         static const sf::Color couleurs[7];
 
-         protected:
-
+    protected:
         void setMatrixShape();
 
     private:
-
-
-
         int type_piece;
         int orientation;
         sf::Vector2i position;

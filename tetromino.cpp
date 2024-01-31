@@ -1,17 +1,15 @@
 #include "tetromino.hpp"
 
-Tetromino::Tetromino(int t, int o, sf::Vector2i pos)/
-    piece(4)
+Tetromino::Tetromino(int t, int o, sf::Vector2f pos)
 {
+    std::vector<bool> v(4, false);
 
-    vector<bool> v(4, false);
-    for( int i = 0, i<4, i++)
-        piece[i] = v;
+    for( int i = 0; i<4; i++)
+        piece.push_back(v);
     
-    setTypePiece(t);
-    setOrientation(o);
-    setPosition(pos);
-
+    this->setTypePiece(t);
+    this->setOrientation(o);
+    this->setPosition(pos);
 }
 
 const bool Tetromino::pieces[7][4][4][4] =
