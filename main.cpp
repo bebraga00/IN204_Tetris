@@ -1,7 +1,8 @@
 #include <SFML/Graphics.hpp>
 
-#include"window.hpp" // window and cell dimensions definition
-#include"colors.hpp" // RGBA colors definitions
+#include"window.hpp"      // window and cell dimensions definitions
+#include"colors.hpp"      // RGBA colors definitions
+#include"tetromino.hpp"   // Blocks definitions
 
 int main(){
     // define window dimensions, name and view
