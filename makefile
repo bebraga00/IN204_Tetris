@@ -1,30 +1,16 @@
-# Makefile for compiling main.cpp with SFML
+all: sfml-app
 
-# Compiler
-CXX = g++
+sfml-app: object.o
+	g++ object.o -o sfml-app -lsfml-graphics -lsfml-window -lsfml-system
 
-# Compiler flags
-CXXFLAGS = -Wall -Wextra -std=c++11
+object.o: main.o tetromino.o
+	ld -r main.o tetromino.o -o object.o
 
-# SFML libraries
-SFML_LIBS = -lsfml-graphics -lsfml-window -lsfml-system
+main.o: main.cpp
+	g++ -c main.cpp
 
-# Target executable
-TARGET = app.exe
-
-# Source file
-SRC = main.cpp
-
-# Object file
-OBJ = main.o
-
-all: $(TARGET)
-
-$(TARGET): $(OBJ)
-	$(CXX) $^ -o $@ $(SFML_LIBS)
-
-$(OBJ): $(SRC)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+tetromino.o: tetromino.cpp
+	g++ -c tetromino.cpp
 
 clean:
-	rm -f $(OBJ) $(TARGET)
+	rm -f *.o sfml-app
