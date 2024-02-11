@@ -1,227 +1,65 @@
+#ifndef TETROMINO_CPP
+#define TETROMINO_CPP
+
 #include "tetromino.hpp"
+#include "globals.hpp"
+#include <vector>
 
-Tetromino::Tetromino(int t, int o, sf::Vector2f pos){
-    std::vector<bool> v(4, false);
+// the constructor receives the tetromino shape and initialises its rotation as zero and calls the init_tetromino method
+Tetromino::Tetromino(char shape) : rotation(0), shape(shape), tetromino_matrix(init_tetromino(shape)){}
 
-    for( int i = 0; i<4; i++)
-        piece.push_back(v);
-    
-    this->setTypePiece(t);
-    this->setOrientation(o);
-    this->setPosition(pos);
+// function that initialises the given tetromino
+std::vector<Position> Tetromino::init_tetromino(char shape){
+    std::vector<Position> tetromino_return(4);
+    switch(shape){
+        case 'I':{
+            tetromino_return[0] = {1, -1};
+            tetromino_return[1] = {0, -1};
+            tetromino_return[2] = {-1, -1};
+            tetromino_return[3] = {-2, -1};
+        }
+        case 'O':{
+            tetromino_return[0] = {0, 0};
+            tetromino_return[1] = {0, -1};
+            tetromino_return[2] = {-1, -1};
+            tetromino_return[3] = {-1, 0};
+        }
+        case 'T':{
+            tetromino_return[0] = {0, 0};
+            tetromino_return[1] = {1, 0};
+            tetromino_return[2] = {0, -1};
+            tetromino_return[3] = {-1, 0};
+        }
+        case 'S':{
+            tetromino_return[0] = {0, 0};
+            tetromino_return[1] = {1, 0};
+            tetromino_return[2] = {0, -1};
+            tetromino_return[3] = {-1, -1};
+        }
+        case 'Z':{
+            tetromino_return[0] = {0, 0};
+            tetromino_return[1] = {1, -1};
+            tetromino_return[2] = {0, -1};
+            tetromino_return[3] = {-1, 0};
+        }
+        case 'L':{
+            tetromino_return[0] = {0, 0};
+            tetromino_return[1] = {1, 0};
+            tetromino_return[2] = {-1, -1};
+            tetromino_return[3] = {-1, 0};
+        }
+        case 'J':{
+            tetromino_return[0] = {0, 0};
+            tetromino_return[1] = {1, 0};
+            tetromino_return[2] = {1, -1};
+            tetromino_return[3] = {-1, 0};
+        }
+
+    }
+    return tetromino_return;
 }
 
-const bool Tetromino::pieces[7][4][4][4] = {
-    { // O
-        {
-            {0, 0, 0, 0},
-            {0, 1, 1, 0},
-            {0, 1, 1, 0},
-            {0, 0, 0, 0}
-        },
-
-        {
-            {0, 0, 0, 0},
-            {0, 1, 1, 0},
-            {0, 1, 1, 0},
-            {0, 0, 0, 0}
-        },
-
-        {
-            {0, 0, 0, 0},
-            {0, 1, 1, 0},
-            {0, 1, 1, 0},
-            {0, 0, 0, 0}
-        },
-
-        {
-            {0, 0, 0, 0},
-            {0, 1, 1, 0},
-            {0, 1, 1, 0},
-            {0, 0, 0, 0}
-        }
-    },
-
-    { // I
-        {
-            {0, 0, 0, 0},
-            {1, 1, 1, 1},
-            {0, 0, 0, 0},
-            {0, 0, 0, 0}
-        },
-
-        {
-            {0, 1, 0, 0},
-            {0, 1, 0, 0},
-            {0, 1, 0, 0},
-            {0, 1, 0, 0}
-        },
-
-        {
-            {0, 0, 0, 0},
-            {0, 0, 0, 0},
-            {1, 1, 1, 1},
-            {0, 0, 0, 0}
-        },
-
-        {
-            {0, 0, 1, 0},
-            {0, 0, 1, 0},
-            {0, 0, 1, 0},
-            {0, 0, 1, 0}
-        }
-
-
-    },
-
-    { // S
-        {
-            {0, 0, 0, 0},
-            {0, 1, 1, 0},
-            {1, 1, 0, 0},
-            {0, 0, 0, 0}
-        },
-
-        {
-            {0, 0, 0, 0},
-            {1, 0, 0, 0},
-            {1, 1, 0, 0},
-            {0, 1, 0, 0}
-        },
-
-        {
-            {0, 0, 0, 0},
-            {0, 0, 0, 0},
-            {0, 1, 1, 0},
-            {1, 1, 0, 0}
-        },
-
-        {
-            {0, 0, 0, 0},
-            {0, 1, 0, 0},
-            {0, 1, 1, 0},
-            {0, 0, 1, 0}
-        }
-    },
-
-    { // Z
-        {
-            {0, 0, 0, 0},
-            {1, 1, 0, 0},
-            {0, 1, 1, 0},
-            {0, 0, 0, 0}
-        },
-
-        {
-            {0, 0, 0, 0},
-            {0, 1, 0, 0},
-            {1, 1, 0, 0},
-            {1, 0, 0, 0}
-        },
-
-        {
-            {0, 0, 0, 0},
-            {0, 0, 0, 0},
-            {1, 1, 0, 0},
-            {0, 1, 1, 0}
-        },
-
-        {
-            {0, 0, 0, 0},
-            {0, 0, 1, 0},
-            {0, 1, 1, 0},
-            {0, 1, 0, 0}
-        }
-    },
-
-    { // L
-        {
-            {0, 0, 0, 0},
-            {0, 0, 1, 0},
-            {1, 1, 1, 0},
-            {0, 0, 0, 0}
-        },
-
-        {
-            {0, 0, 0, 0},
-            {1, 1, 0, 0},
-            {0, 1, 0, 0},
-            {0, 1, 0, 0}
-        },
-
-        {
-            {0, 0, 0, 0},
-            {0, 0, 0, 0},
-            {1, 1, 1, 0},
-            {1, 0, 0, 0}
-        },
-
-        {
-            {0, 0, 0, 0},
-            {0, 1, 0, 0},
-            {0, 1, 0, 0},
-            {0, 1, 1, 0}
-        }
-    },
-
-    { // J
-        {
-            {0, 0, 0, 0},
-            {1, 0, 0, 0},
-            {1, 1, 1, 0},
-            {0, 0, 0, 0}
-        },
-
-        {
-            {0, 0, 0, 0},
-            {0, 1, 0, 0},
-            {0, 1, 0, 0},
-            {1, 1, 0, 0}
-        },
-
-        {
-            {0, 0, 0, 0},
-            {0, 0, 0, 0},
-            {1, 1, 1, 0},
-            {0, 0, 1, 0}
-        },
-
-        {
-            {0, 0, 0, 0},
-            {0, 1, 1, 0},
-            {0, 1, 0, 0},
-            {0, 1, 0, 0}
-        }
-    },
-
-    { // T
-        {
-            {0, 0, 0, 0},
-            {0, 1, 0, 0},
-            {1, 1, 1, 0},
-            {0, 0, 0, 0}
-        },
-
-        {
-
-            {0, 0, 0, 0},
-            {0, 1, 0, 0},
-            {1, 1, 0, 0},
-            {0, 1, 0, 0}
-        },
-
-        {
-            {0, 0, 0, 0},
-            {0, 0, 0, 0},
-            {1, 1, 1, 0},
-            {0, 1, 0, 0}
-        },
-
-        {
-            {0, 0, 0, 0},
-            {0, 1, 0, 0},
-            {0, 1, 1, 0},
-            {0, 1, 0, 0}
-        },
-    }
-};
+std::vector<Position> Tetromino::get_tetromino_matrix(){
+    return tetromino_matrix;
+}
+#endif
