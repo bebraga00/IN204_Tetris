@@ -15,7 +15,7 @@ class Tetromino{
         std::vector<Position> init_tetromino(char shape);
         // std::vector<Position> get_tetromino();
         std::vector<Position> get_tetromino_matrix();
-    private:
+    // private:
         char shape;
         int rotation;
         std::vector<Position> tetromino_matrix;

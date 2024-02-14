@@ -17,46 +17,53 @@ std::vector<Position> Tetromino::init_tetromino(char shape){
             tetromino_return[1] = {0, -1};
             tetromino_return[2] = {-1, -1};
             tetromino_return[3] = {-2, -1};
+            return tetromino_return;
         }
         case 'O':{
             tetromino_return[0] = {0, 0};
             tetromino_return[1] = {0, -1};
             tetromino_return[2] = {-1, -1};
             tetromino_return[3] = {-1, 0};
+            return tetromino_return;
         }
         case 'T':{
             tetromino_return[0] = {0, 0};
             tetromino_return[1] = {1, 0};
             tetromino_return[2] = {0, -1};
             tetromino_return[3] = {-1, 0};
+            return tetromino_return;
         }
         case 'S':{
             tetromino_return[0] = {0, 0};
             tetromino_return[1] = {1, 0};
             tetromino_return[2] = {0, -1};
             tetromino_return[3] = {-1, -1};
+            return tetromino_return;
         }
         case 'Z':{
             tetromino_return[0] = {0, 0};
             tetromino_return[1] = {1, -1};
             tetromino_return[2] = {0, -1};
             tetromino_return[3] = {-1, 0};
+            return tetromino_return;
         }
         case 'L':{
             tetromino_return[0] = {0, 0};
             tetromino_return[1] = {1, 0};
             tetromino_return[2] = {-1, -1};
             tetromino_return[3] = {-1, 0};
+            return tetromino_return;
         }
         case 'J':{
             tetromino_return[0] = {0, 0};
             tetromino_return[1] = {1, 0};
             tetromino_return[2] = {1, -1};
             tetromino_return[3] = {-1, 0};
+            return tetromino_return;
         }
 
     }
-    return tetromino_return;
+    exit(1);
 }
 
 std::vector<Position> Tetromino::get_tetromino_matrix(){
