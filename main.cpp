@@ -64,23 +64,31 @@ int main(){
     // the random seed to generate the tetrominos
     srand(time(0));
 
-    // SFML 
+    // SFML event
     sf::Event event;
 
     // current falling tetromino
-    Tetromino current_tetromino(get_random_shape());
+    Tetromino current_tetromino(get_random_shape(), rand() % 5);
     // next tetramino
-    Tetromino next_tetromino(get_random_shape());
+    Tetromino next_tetromino(get_random_shape(), 0);
 
     // record the current time
     std::chrono::time_point<std::chrono::steady_clock> previous_time = std::chrono::steady_clock::now();
     unsigned int lag = 0;
+
+    int i = 0;
 
     while (window.isOpen()){
         // record the time difference
         unsigned delta_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - previous_time).count();
         lag += delta_time;
         previous_time += std::chrono::microseconds(delta_time);
+
+        while (window.pollEvent(event)){
+            if (event.type == sf::Event::Closed)
+                window.close();
+                // return 0;
+        }
 
         // if we have surpassed the frame duration, we initiate our operations
         while(lag > FRAME_DURATION){
@@ -103,30 +111,29 @@ int main(){
                 }
             }
 
+            // draw the current tetromino
             cell.setFillColor(get_shape_color(current_tetromino.get_shape()));
             for(Position& mino : current_tetromino.get_tetromino_matrix()){
-                cell.setPosition((mino.x + 3) * PIXELS_PER_CELL, (mino.y + 3) * PIXELS_PER_CELL);
+                cell.setPosition(mino.x * PIXELS_PER_CELL, mino.y * PIXELS_PER_CELL);
                 window.draw(cell);
             }
 
+            // draw the next tetromino
             cell.setFillColor(get_shape_color(next_tetromino.get_shape()));
             for(Position& mino : next_tetromino.get_tetromino_matrix()){
                 cell.setPosition((mino.x + round(WINDOW_WIDTH * 1.5)) * PIXELS_PER_CELL, (mino.y + round(WINDOW_WIDTH * 0.5)) * PIXELS_PER_CELL);
                 window.draw(cell);
             }
 
-
             // display the current drawn window
             window.display();
-            
 
             // update the current tetromino
-            current_tetromino = Tetromino(next_tetromino.get_shape());
-            next_tetromino = Tetromino(get_random_shape());
+            current_tetromino = Tetromino(next_tetromino.get_shape(), rand() % 5);
+            next_tetromino = Tetromino(get_random_shape(), 0);
+            
+            sleep(2);
         }
-
-        
-        // sleep(5);
     }
 
     return 0;
