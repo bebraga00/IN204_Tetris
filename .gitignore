@@ -1,3 +1,4 @@
 #ignorer le fichier makefile
 makefile
+.vscode
 
