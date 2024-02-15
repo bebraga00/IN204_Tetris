@@ -66,6 +66,10 @@ std::vector<Position> Tetromino::init_tetromino(char shape){
     exit(1);
 }
 
+char Tetromino::get_shape(){
+    return this->shape;
+}
+
 std::vector<Position> Tetromino::get_tetromino_matrix(){
     return tetromino_matrix;
 }
