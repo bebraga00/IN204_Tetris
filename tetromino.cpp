@@ -14,10 +14,6 @@ std::vector<Position> Tetromino::init_tetromino(char shape, int offset){
     std::vector<Position> tetromino_return(4);
     switch(shape){
         case 'I':{
-            // tetromino_return[0] = {1, -1};
-            // tetromino_return[1] = {0, -1};
-            // tetromino_return[2] = {-1, -1};
-            // tetromino_return[3] = {-2, -1};
             tetromino_return[0] = {3 + offset, 0};
             tetromino_return[1] = {2 + offset, 0};
             tetromino_return[2] = {1 + offset, 0};
@@ -25,10 +21,6 @@ std::vector<Position> Tetromino::init_tetromino(char shape, int offset){
             return tetromino_return;
         }
         case 'O':{
-            // tetromino_return[0] = {0, 0};
-            // tetromino_return[1] = {0, -1};
-            // tetromino_return[2] = {-1, -1};
-            // tetromino_return[3] = {-1, 0};
             tetromino_return[0] = {1 + offset, 1};
             tetromino_return[1] = {1 + offset, 0};
             tetromino_return[2] = {0 + offset, 0};
@@ -36,10 +28,6 @@ std::vector<Position> Tetromino::init_tetromino(char shape, int offset){
             return tetromino_return;
         }
         case 'T':{
-            // tetromino_return[0] = {0, 0};
-            // tetromino_return[1] = {1, 0};
-            // tetromino_return[2] = {0, -1};
-            // tetromino_return[3] = {-1, 0};
             tetromino_return[0] = {1 + offset, 1};
             tetromino_return[1] = {2 + offset, 1};
             tetromino_return[2] = {1 + offset, 0};
@@ -47,10 +35,6 @@ std::vector<Position> Tetromino::init_tetromino(char shape, int offset){
             return tetromino_return;
         }
         case 'S':{
-            // tetromino_return[0] = {0, 0};
-            // tetromino_return[1] = {1, 0};
-            // tetromino_return[2] = {0, -1};
-            // tetromino_return[3] = {-1, -1};
             tetromino_return[0] = {1 + offset, 1};
             tetromino_return[1] = {2 + offset, 1};
             tetromino_return[2] = {1 + offset, 0};
@@ -58,10 +42,6 @@ std::vector<Position> Tetromino::init_tetromino(char shape, int offset){
             return tetromino_return;
         }
         case 'Z':{
-            // tetromino_return[0] = {0, 0};
-            // tetromino_return[1] = {1, -1};
-            // tetromino_return[2] = {0, -1};
-            // tetromino_return[3] = {-1, 0};
             tetromino_return[0] = {1 + offset, 1};
             tetromino_return[1] = {2 + offset, 0};
             tetromino_return[2] = {1 + offset, 0};
@@ -69,10 +49,6 @@ std::vector<Position> Tetromino::init_tetromino(char shape, int offset){
             return tetromino_return;
         }
         case 'L':{
-            // tetromino_return[0] = {0, 0};
-            // tetromino_return[1] = {1, 0};
-            // tetromino_return[2] = {-1, -1};
-            // tetromino_return[3] = {-1, 0};
             tetromino_return[0] = {1 + offset, 1};
             tetromino_return[1] = {2 + offset, 1};
             tetromino_return[2] = {0 + offset, 0};
@@ -80,10 +56,6 @@ std::vector<Position> Tetromino::init_tetromino(char shape, int offset){
             return tetromino_return;
         }
         case 'J':{
-            // tetromino_return[0] = {0, 0};
-            // tetromino_return[1] = {1, 0};
-            // tetromino_return[2] = {1, -1};
-            // tetromino_return[3] = {-1, 0};
             tetromino_return[0] = {1 + offset, 1};
             tetromino_return[1] = {2 + offset, 1};
             tetromino_return[2] = {2 + offset, 0};
@@ -145,6 +117,12 @@ void Tetromino::move_right(const std::vector<std::vector<unsigned char>>& game_m
     }
     for(Position& mino : this->tetromino_matrix){
         mino.x++;
+    }
+}
+
+void Tetromino::update_matrix(std::vector<std::vector<unsigned char>>& game_matrix){
+    for(Position& mino : tetromino_matrix){
+        game_matrix[mino.x][mino.y] = this->get_shape();
     }
 }
 

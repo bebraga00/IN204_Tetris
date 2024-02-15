@@ -6,6 +6,6 @@ constexpr unsigned int WINDOW_HEIGHT = 20;
 constexpr unsigned int PIXELS_PER_CELL = 10;
 constexpr unsigned int WINDOW_RESIZE = 4;
 
-constexpr unsigned short FRAME_DURATION = 16667;
+constexpr unsigned int FRAME_DURATION = 166667;
 
 #endif
