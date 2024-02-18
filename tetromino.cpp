@@ -5,6 +5,8 @@
 #include "globals.hpp"
 #include "window.hpp"
 #include <vector>
+#include <stdio.h>
+#include <iostream>
 
 // the constructor receives the tetromino shape and initialises its rotation as zero and calls the init_tetromino method
 Tetromino::Tetromino(char shape, int offset) : rotation(0), shape(shape), tetromino_matrix(init_tetromino(shape, offset)){}
@@ -118,6 +120,17 @@ void Tetromino::move_right(const std::vector<std::vector<unsigned char>>& game_m
     for(Position& mino : this->tetromino_matrix){
         mino.x++;
     }
+}
+
+void Tetromino::rush_down(const std::vector<std::vector<unsigned char>>& game_matrix){
+    while(move_down(game_matrix)){
+        continue;
+    }
+    return;
+}
+
+void Tetromino::rotate(const std::vector<std::vector<unsigned char>>& game_matrix){
+    
 }
 
 void Tetromino::update_matrix(std::vector<std::vector<unsigned char>>& game_matrix){

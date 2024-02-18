@@ -12,6 +12,7 @@
 
 int CELL_SIZE = 8;
 
+// get a random char which represents each shape
 char get_random_shape(){
     int shape = rand() % 7;
     switch (shape){
@@ -33,6 +34,7 @@ char get_random_shape(){
     exit(1);
 }
 
+// get the corresponding rgba color for each shape
 sf::Color get_shape_color(char shape){
     switch (shape){
     case 'I':
@@ -54,12 +56,15 @@ sf::Color get_shape_color(char shape){
 }
 
 int main(){
+    // 
+    bool already_moved = false;
+
     // the game matrix on which we will write all the information
     std::vector<std::vector<unsigned char>> matrix(WINDOW_WIDTH, std::vector<unsigned char>(WINDOW_HEIGHT));
 
     // define window dimensions, name and view
     sf::RenderWindow window(sf::VideoMode(2 * WINDOW_WIDTH * PIXELS_PER_CELL * WINDOW_RESIZE, WINDOW_HEIGHT * PIXELS_PER_CELL * WINDOW_RESIZE), "Tetris v1.2");
-    window.setView(sf::View(sf::FloatRect(0, 0, 2 * PIXELS_PER_CELL * WINDOW_WIDTH, PIXELS_PER_CELL * WINDOW_HEIGHT)));       
+    window.setView(sf::View(sf::FloatRect(0, 0, 2 * PIXELS_PER_CELL * (WINDOW_WIDTH + 1), PIXELS_PER_CELL * (WINDOW_HEIGHT))));       
 
     // the random seed to generate the tetrominos
     srand(time(0));
@@ -89,16 +94,50 @@ int main(){
             // close the window
             while (window.pollEvent(event)){
                 switch(event.type){
-                    case sf::Event::Closed:{
+                    case (sf::Event::Closed):{
                         window.close();
                         break;
                     }
                     case sf::Event::KeyPressed:{
-                        if(event.key.code == sf::Keyboard::Right){
-                            current_tetromino.move_right(matrix);
-                        }else if(event.key.code == sf::Keyboard::Left){
-                            current_tetromino.move_left(matrix);
+                        if(not(already_moved)){
+                            switch(event.key.code){
+                                case(sf::Keyboard::Right):{
+                                    already_moved = true;
+                                    current_tetromino.move_right(matrix);
+                                    break;
+                                }
+                                case(sf::Keyboard::Left):{
+                                    already_moved = true;
+                                    current_tetromino.move_left(matrix);
+                                    break;
+                                }
+                                case(sf::Keyboard::Down):{
+                                    already_moved = true;
+                                    current_tetromino.rush_down(matrix);    
+                                    break;
+                                }
+                            }    
+                            break;
+                        }else{
+                            break;
                         }
+                    }
+                    case sf::Event::KeyReleased:{
+                        switch(event.key.code){
+                            case(sf::Keyboard::Right):{
+                                already_moved = false;
+                                break;
+                            }
+                            case(sf::Keyboard::Left):{
+                                already_moved = false;
+                                break;
+                            }
+                            case(sf::Keyboard::Down):{
+                                already_moved = false;
+                                break;
+                            }
+                        }
+                        break;
                     }
                 }
             }
@@ -117,6 +156,12 @@ int main(){
                     window.draw(cell);
                 }
             }
+
+            // draw the vertical line separating the board
+            sf::RectangleShape vertical_line(sf::Vector2f(PIXELS_PER_CELL / 5, WINDOW_HEIGHT * PIXELS_PER_CELL));
+            vertical_line.setFillColor(sf::Color::White);
+            vertical_line.setPosition((WINDOW_WIDTH) * PIXELS_PER_CELL + round((2 * PIXELS_PER_CELL) / 5), 0);
+            window.draw(vertical_line);
 
             // draw the current tetromino
             cell.setFillColor(get_shape_color(current_tetromino.get_shape()));
