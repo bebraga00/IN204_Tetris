@@ -68,7 +68,7 @@ int main(){
     sf::Event event;
 
     // current falling tetromino
-    Tetromino current_tetromino(get_random_shape(), rand() % 5);
+    Tetromino current_tetromino(get_random_shape(), rand() % 7);
     // next tetramino
     Tetromino next_tetromino(get_random_shape(), 0);
 
@@ -76,37 +76,44 @@ int main(){
     std::chrono::time_point<std::chrono::steady_clock> previous_time = std::chrono::steady_clock::now();
     unsigned int lag = 0;
 
-    int i = 0;
-
     while (window.isOpen()){
         // record the time difference
         unsigned delta_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - previous_time).count();
         lag += delta_time;
         previous_time += std::chrono::microseconds(delta_time);
 
-        while (window.pollEvent(event)){
-            if (event.type == sf::Event::Closed)
-                window.close();
-                // return 0;
-        }
-
         // if we have surpassed the frame duration, we initiate our operations
-        while(lag > FRAME_DURATION){
+        while(lag >= FRAME_DURATION){
             lag -= FRAME_DURATION;
 
             // close the window
             while (window.pollEvent(event)){
-                if (event.type == sf::Event::Closed)
-                    window.close();
+                switch(event.type){
+                    case sf::Event::Closed:{
+                        window.close();
+                        break;
+                    }
+                    case sf::Event::KeyPressed:{
+                        if(event.key.code == sf::Keyboard::Right){
+                            current_tetromino.move_right(matrix);
+                        }else if(event.key.code == sf::Keyboard::Left){
+                            current_tetromino.move_left(matrix);
+                        }
+                    }
+                }
             }
             
-            // fill the window with the gray background
+            // draw the window with the gray background and the set tetrominos
             sf::RectangleShape cell(sf::Vector2f(PIXELS_PER_CELL - 1, PIXELS_PER_CELL - 1));
             window.clear();
             for(int i = 0; i < WINDOW_WIDTH; i++){
                 for(int j = 0; j < WINDOW_HEIGHT; j++){
+                    if(matrix[i][j] == 0){
+                        cell.setFillColor(grey_background);
+                    }else{
+                        cell.setFillColor(get_shape_color(matrix[i][j]));
+                    }
                     cell.setPosition(PIXELS_PER_CELL * i, PIXELS_PER_CELL * j);
-                    cell.setFillColor(grey_background);
                     window.draw(cell);
                 }
             }
@@ -127,12 +134,13 @@ int main(){
 
             // display the current drawn window
             window.display();
-
-            // update the current tetromino
-            current_tetromino = Tetromino(next_tetromino.get_shape(), rand() % 5);
-            next_tetromino = Tetromino(get_random_shape(), 0);
             
-            sleep(2);
+            // update the tetromino
+            if(not(current_tetromino.move_down(matrix))){
+                current_tetromino.update_matrix(matrix);
+                current_tetromino = Tetromino(next_tetromino.get_shape(), rand() % 7);
+                next_tetromino = Tetromino(get_random_shape(), 0);
+            }
         }
     }
 
