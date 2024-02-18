@@ -5,6 +5,8 @@
 #include "globals.hpp"
 #include "window.hpp"
 #include <vector>
+#include <stdio.h>
+#include <iostream>
 
 // the constructor receives the tetromino shape and initialises its rotation as zero and calls the init_tetromino method
 Tetromino::Tetromino(char shape, int offset) : rotation(0), shape(shape), tetromino_matrix(init_tetromino(shape, offset)){}
@@ -28,35 +30,35 @@ std::vector<Position> Tetromino::init_tetromino(char shape, int offset){
             return tetromino_return;
         }
         case 'T':{
-            tetromino_return[0] = {1 + offset, 1};
+            tetromino_return[0] = {1 + offset, 1}; // central piece
             tetromino_return[1] = {2 + offset, 1};
             tetromino_return[2] = {1 + offset, 0};
             tetromino_return[3] = {0 + offset, 1};
             return tetromino_return;
         }
         case 'S':{
-            tetromino_return[0] = {1 + offset, 1};
+            tetromino_return[0] = {1 + offset, 1}; // central piece
             tetromino_return[1] = {2 + offset, 1};
             tetromino_return[2] = {1 + offset, 0};
             tetromino_return[3] = {0 + offset, 0};
             return tetromino_return;
         }
         case 'Z':{
-            tetromino_return[0] = {1 + offset, 1};
+            tetromino_return[0] = {1 + offset, 1}; // central piece
             tetromino_return[1] = {2 + offset, 0};
             tetromino_return[2] = {1 + offset, 0};
             tetromino_return[3] = {0 + offset, 1};
             return tetromino_return;
         }
         case 'L':{
-            tetromino_return[0] = {1 + offset, 1};
+            tetromino_return[0] = {1 + offset, 1}; // central piece
             tetromino_return[1] = {2 + offset, 1};
             tetromino_return[2] = {0 + offset, 0};
             tetromino_return[3] = {0 + offset, 1};
             return tetromino_return;
         }
         case 'J':{
-            tetromino_return[0] = {1 + offset, 1};
+            tetromino_return[0] = {1 + offset, 1}; // central piece
             tetromino_return[1] = {2 + offset, 1};
             tetromino_return[2] = {2 + offset, 0};
             tetromino_return[3] = {0 + offset, 1};
@@ -117,6 +119,75 @@ void Tetromino::move_right(const std::vector<std::vector<unsigned char>>& game_m
     }
     for(Position& mino : this->tetromino_matrix){
         mino.x++;
+    }
+}
+
+void Tetromino::rush_down(const std::vector<std::vector<unsigned char>>& game_matrix){
+    while(move_down(game_matrix)){
+        continue;
+    }
+    return;
+}
+
+void Tetromino::rotate(const std::vector<std::vector<unsigned char>>& game_matrix){
+    if(this->get_shape() == 'O'){
+        return;
+    }else if(this->get_shape() != 'I'){
+        std::vector<Position> rotated_tetromino = this->get_tetromino_matrix();
+        int delta_x;
+        int delta_y;
+        for(int i = 1; i < 4; i++){
+            // 90 degree clockwise rotation centered around tetromino_matrix[0] 
+            delta_x = tetromino_matrix[i].x - tetromino_matrix[0].x;
+            delta_y = tetromino_matrix[i].y - tetromino_matrix[0].y;
+            // rotation formula: x <- y and y <- -x
+            rotated_tetromino[i].x = delta_y + tetromino_matrix[0].x;
+            rotated_tetromino[i].y = tetromino_matrix[0].y - delta_x;
+            // guarantee we do not exceed the board dimensions
+            if(rotated_tetromino[i].y >= WINDOW_HEIGHT){
+                return;
+            }
+        }
+        // verify that the tetromino does not not exit the board
+        for(Position& mino : rotated_tetromino){
+            if(mino.x < 0){
+                rotated_tetromino[0].x += 1;
+                rotated_tetromino[1].x += 1;
+                rotated_tetromino[2].x += 1;
+                rotated_tetromino[3].x += 1;
+                break;
+            }else if(mino.x >= WINDOW_WIDTH - 1){
+                rotated_tetromino[0].x -= 1;
+                rotated_tetromino[1].x -= 1;
+                rotated_tetromino[2].x -= 1;
+                rotated_tetromino[3].x -= 1;
+                break;
+            }
+        }
+        // verify that there is no other block there
+        for(Position& mino : rotated_tetromino){
+            if(game_matrix[mino.x][mino.y] != 0){
+                return;
+            }
+        }
+        this->tetromino_matrix = rotated_tetromino;
+        this->rotation = (this->rotation + 1) % 4;
+        return;
+    }else{
+        std::vector<Position> rotated_tetromino = this->get_tetromino_matrix();        
+        if(this->rotation == 0){ //upper horizontal position
+            
+        }else if(this->rotation == 1){
+
+        }else if(this->rotation == 2){
+
+        }else{
+
+        }
+
+        this->tetromino_matrix = rotated_tetromino;
+        this->rotation = (this->rotation + 1) % 4;
+        return;
     }
 }
 
