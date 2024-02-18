@@ -129,6 +129,21 @@ void Tetromino::rush_down(const std::vector<std::vector<unsigned char>>& game_ma
     return;
 }
 
+bool Tetromino::reset(char shape, const std::vector<std::vector<unsigned char>>& game_matrix){
+    rotation = 0;
+    tetromino_matrix = get_tetromino_matrix();
+    for(Position& mino: tetromino_matrix)
+    {
+        if(0 < game_matrix[mino.x][mino.y])
+        {
+            return 0;
+        }
+    
+    }
+            return 1;
+}
+
+
 void Tetromino::rotate(const std::vector<std::vector<unsigned char>>& game_matrix){
     if(this->get_shape() == 'O'){
         return;

@@ -192,8 +192,31 @@ int main(){
             // update the tetromino
             if(not(current_tetromino.move_down(matrix))){
                 current_tetromino.update_matrix(matrix);
+                for(unsigned char a = 0; a < WINDOW_HEIGHT; a++)
+                {
+                    bool clear_line = 1;
+                    for(unsigned char b = 0; b < WINDOW_WIDTH; b++)
+                    {
+                        if(matrix[b][a] == 0)
+                        {
+                            clear_line = 0;
+                            break;
+                        }
+                    }
+                    if(clear_line == 1)
+                    {
+                        for(std::vector<unsigned char>& a : matrix)
+                        {
+                            std::fill(a.begin(), a.end(), 0);
+                        }
+                    }
+                }
                 current_tetromino = Tetromino(next_tetromino.get_shape(), rand() % 7);
                 next_tetromino = Tetromino(get_random_shape(), 0);
+                if(next_tetromino.reset(next_tetromino.get_shape(), matrix) == 0)
+                {
+                    window.close();
+                }
             }
         }
     }
