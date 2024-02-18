@@ -116,6 +116,11 @@ int main(){
                                     current_tetromino.rush_down(matrix);    
                                     break;
                                 }
+                                case(sf::Keyboard::Up):{
+                                    already_moved = true;
+                                    current_tetromino.rotate(matrix);
+                                    break;
+                                }
                             }    
                             break;
                         }else{
@@ -133,6 +138,10 @@ int main(){
                                 break;
                             }
                             case(sf::Keyboard::Down):{
+                                already_moved = false;
+                                break;
+                            }
+                            case(sf::Keyboard::Up):{
                                 already_moved = false;
                                 break;
                             }
