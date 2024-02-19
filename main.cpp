@@ -73,9 +73,9 @@ int main(){
     sf::Event event;
 
     // current falling tetromino
-    Tetromino current_tetromino(get_random_shape(), rand() % 7);
+    Tetromino current_tetromino('I', rand() % 7);
     // next tetramino
-    Tetromino next_tetromino(get_random_shape(), 0);
+    Tetromino next_tetromino('I', 0);
 
     // record the current time
     std::chrono::time_point<std::chrono::steady_clock> previous_time = std::chrono::steady_clock::now();
@@ -212,7 +212,7 @@ int main(){
                     }
                 }
                 current_tetromino = Tetromino(next_tetromino.get_shape(), rand() % 7);
-                next_tetromino = Tetromino(get_random_shape(), 0);
+                next_tetromino = Tetromino('I', 0);
                 if(next_tetromino.reset(next_tetromino.get_shape(), matrix) == 0)
                 {
                     window.close();

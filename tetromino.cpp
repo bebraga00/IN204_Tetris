@@ -138,7 +138,6 @@ bool Tetromino::reset(char shape, const std::vector<std::vector<unsigned char>>&
         {
             return 0;
         }
-    
     }
             return 1;
 }
@@ -189,17 +188,60 @@ void Tetromino::rotate(const std::vector<std::vector<unsigned char>>& game_matri
         this->rotation = (this->rotation + 1) % 4;
         return;
     }else{
+        // rotations for the 'I' shape done manually
         std::vector<Position> rotated_tetromino = this->get_tetromino_matrix();        
-        if(this->rotation == 0){ //upper horizontal position
-            
-        }else if(this->rotation == 1){
-
-        }else if(this->rotation == 2){
-
+        if(this->rotation == 0){ // from upper horizontal position
+            rotated_tetromino[0].x -= 1;
+            rotated_tetromino[0].y -= 2;
+            rotated_tetromino[1].y -= 1;
+            rotated_tetromino[2].x += 1;
+            rotated_tetromino[3].x += 2;
+            rotated_tetromino[3].y += 1;
+        }else if(this->rotation == 1){ // from right vertical position
+            rotated_tetromino[0].x -= 2;
+            rotated_tetromino[0].y += 1;
+            rotated_tetromino[1].x -= 1;
+            rotated_tetromino[2].y -= 1;
+            rotated_tetromino[3].x += 1;
+            rotated_tetromino[3].y -= 2;
+        }else if(this->rotation == 2){ // from lower horizontal position
+            rotated_tetromino[0].x += 1;
+            rotated_tetromino[0].y += 2;
+            rotated_tetromino[1].y += 1;
+            rotated_tetromino[2].x -= 1;
+            rotated_tetromino[3].x -= 2;
+            rotated_tetromino[3].y -= 1;
+        }else if(this->rotation == 3){ // from left horizontal position
+            rotated_tetromino[0].x += 2;
+            rotated_tetromino[0].y -= 1;
+            rotated_tetromino[1].x += 1;
+            rotated_tetromino[2].y += 1;
+            rotated_tetromino[3].x -= 1;
+            rotated_tetromino[3].y += 2;
         }else{
-
+            exit(1);
         }
 
+        int x_to_subtract = 0;
+        for(Position& mino : rotated_tetromino){
+            if(mino.y >= WINDOW_HEIGHT or mino.y < 0){
+                return;
+            }
+            // find the maximum value to 
+            if(mino.x < 0 && mino.x < x_to_subtract){
+                x_to_subtract = mino.x;
+            }else if(mino.x >= WINDOW_WIDTH && mino.x - (WINDOW_WIDTH - 1) > x_to_subtract){
+                x_to_subtract = mino.x - (WINDOW_WIDTH - 1);
+            }
+        }
+        for(int i = 0; i < 4; i++){
+            rotated_tetromino[i].x -= x_to_subtract;
+        }
+        for(Position& mino : rotated_tetromino){
+            if(game_matrix[mino.x][mino.y] != 0){
+                return;
+            }
+        }        
         this->tetromino_matrix = rotated_tetromino;
         this->rotation = (this->rotation + 1) % 4;
         return;
