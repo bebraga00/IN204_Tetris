@@ -8,4 +8,5 @@ constexpr unsigned int WINDOW_RESIZE = 2;
 
 constexpr unsigned int FRAME_DURATION = 166667;
 
+
 #endif

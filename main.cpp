@@ -4,10 +4,11 @@
 #include <unistd.h>
 #include <chrono>
 #include <math.h>
+#include <iostream>
 
-#include"window.hpp"      // window and cell dimensions definitions
-#include"colors.hpp"      // RGBA colors definitions
-#include"tetromino.hpp"   // blocks definitions
+#include "window.hpp"      // window and cell dimensions definitions
+#include "colors.hpp"      // RGBA colors definitions
+#include "tetromino.hpp"   // blocks definitions
 #include"globals.hpp"
 
 int CELL_SIZE = 8;
@@ -55,9 +56,27 @@ sf::Color get_shape_color(char shape){
     exit(1);
 }
 
+//function to calculate the score at level 0(We will accomadate when we will implement the levels)
+
+int calculate_points(int cleared_lines) {
+    switch(cleared_lines) {
+        case 1: return 40;
+        case 2: return 100;
+        case 3: return 300;
+        case 4: return 1200;
+        default: return 0;
+    }
+}
+
+
+
+
 int main(){
     // 
     bool already_moved = false;
+    
+    //define the player score
+    int score = 0;
 
     // the game matrix on which we will write all the information
     std::vector<std::vector<unsigned char>> matrix(WINDOW_WIDTH, std::vector<unsigned char>(WINDOW_HEIGHT));
@@ -66,11 +85,16 @@ int main(){
     sf::RenderWindow window(sf::VideoMode(2 * WINDOW_WIDTH * PIXELS_PER_CELL * WINDOW_RESIZE, WINDOW_HEIGHT * PIXELS_PER_CELL * WINDOW_RESIZE), "Tetris v1.2");
     window.setView(sf::View(sf::FloatRect(0, 0, 2 * PIXELS_PER_CELL * (WINDOW_WIDTH + 1), PIXELS_PER_CELL * (WINDOW_HEIGHT))));       
 
+
+   
     // the random seed to generate the tetrominos
     srand(time(0));
 
     // SFML event
     sf::Event event;
+
+    //intialize matrix function
+
 
     // current falling tetromino
     Tetromino current_tetromino('I', rand() % 7);
@@ -192,12 +216,14 @@ int main(){
             // update the tetromino
             if(not(current_tetromino.move_down(matrix))){
                 current_tetromino.update_matrix(matrix);
-                for(unsigned char a = 0; a < WINDOW_HEIGHT; a++)
+                // Count the lines cleared in this move
+                int cleared_lines = 0;
+                for(unsigned char row= 0; row < WINDOW_HEIGHT; row++)
                 {
                     bool clear_line = 1;
-                    for(unsigned char b = 0; b < WINDOW_WIDTH; b++)
+                    for(unsigned char col = 0; col < WINDOW_WIDTH; col++)
                     {
-                        if(matrix[b][a] == 0)
+                        if(matrix[col][row] == 0)
                         {
                             clear_line = 0;
                             break;
@@ -205,9 +231,10 @@ int main(){
                     }
                     if(clear_line == 1)
                     {
-                        for(std::vector<unsigned char>& a : matrix)
+                        cleared_lines++;
+                        for(unsigned char col = 0; col < WINDOW_WIDTH; col++)        
                         {
-                            std::fill(a.begin(), a.end(), 0);
+                            matrix[col][row] = 0;
                         }
                     }
                 }
@@ -215,11 +242,27 @@ int main(){
                 next_tetromino = Tetromino('I', 0);
                 if(next_tetromino.reset(next_tetromino.get_shape(), matrix) == 0)
                 {
-                    window.close();
+                      //put all the values to zero
+                    for(unsigned char i = 0; i< WINDOW_WIDTH; i++){
+                        for(unsigned char j = 0; j< WINDOW_HEIGHT; j++){
+                            matrix[i][j] = 0;
+                    }
+                    }
                 }
+                if(cleared_lines > 0) {
+                score = score + calculate_points(cleared_lines)
+                std::cout << "Score: " << score <<std::endl;
+                }
+
+            
             }
+        
+           
         }
+
     }
+
+  
 
     return 0;
 }

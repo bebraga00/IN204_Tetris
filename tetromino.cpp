@@ -136,10 +136,10 @@ bool Tetromino::reset(char shape, const std::vector<std::vector<unsigned char>>&
     {
         if(0 < game_matrix[mino.x][mino.y])
         {
-            return 0;
+            return 0; //Full matrix, need to restart
         }
     }
-            return 1;
+            return 1; //Matrix not full
 }
 
 
