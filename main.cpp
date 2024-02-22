@@ -85,7 +85,18 @@ int main(){
     sf::RenderWindow window(sf::VideoMode(2 * WINDOW_WIDTH * PIXELS_PER_CELL * WINDOW_RESIZE, WINDOW_HEIGHT * PIXELS_PER_CELL * WINDOW_RESIZE), "Tetris v1.2");
     window.setView(sf::View(sf::FloatRect(0, 0, 2 * PIXELS_PER_CELL * (WINDOW_WIDTH + 1), PIXELS_PER_CELL * (WINDOW_HEIGHT))));       
 
+    // define the police
+    sf::Font font;
+    if (!font.loadFromFile("font/Roboto-Black.ttf")) {
+        std::cerr << "Error loading font" << std::endl;
+        exit(1);
+    }
 
+    sf::Text scoreText;
+    scoreText.setFont(font);
+    scoreText.setCharacterSize(24); // CARACTERS SIZE
+    scoreText.setFillColor(sf::Color::White); // TEXT COLORE
+    scoreText.setPosition(((round(WINDOW_WIDTH * 1.5)) * PIXELS_PER_CELL), ((round(WINDOW_WIDTH * 1.5)) * PIXELS_PER_CELL )); // POSITION
    
     // the random seed to generate the tetrominos
     srand(time(0));
@@ -211,6 +222,9 @@ int main(){
             }
 
             // display the current drawn window
+            scoreText.setString("Score: " + std::to_string(score));
+
+            window.draw(scoreText);
             window.display();
             
             // update the tetromino
@@ -250,8 +264,9 @@ int main(){
                     }
                 }
                 if(cleared_lines > 0) {
-                score = score + calculate_points(cleared_lines)
-                std::cout << "Score: " << score <<std::endl;
+                score = score + calculate_points(cleared_lines);
+               
+
                 }
 
             
