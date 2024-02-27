@@ -1,25 +1,16 @@
-# Makefile for compiling main.cpp with SFML
-# Compiler
-CXX = g++
+all: sfml-app
 
-# Compiler flags
-CXXFLAGS = -Wall -Wextra -std=c++11
+sfml-app: object.o
+	g++ object.o -o sfml-app -lsfml-graphics -lsfml-window -lsfml-system
 
-# SFML libraries
-CC = g++
-CFLAGS = -I"C:\\Users\\hguid\\Documents\\SFML\\SFML-2.6.1\\include" -DSFML_STATIC
-LDFLAGS = -L"C:\\Users\\hguid\\Documents\\SFML\\SFML-2.6.1\\lib" -lsfml-graphics-s -lsfml-window-s -lsfml-system-s -lopengl32 -lfreetype -lwinmm -lgdi32 -mwindows -lsfml-main
+object.o: main.o tetromino.o
+	ld -r main.o tetromino.o -o object.o
 
-SRCS = main.cpp tetromino.cpp 
-OBJS = $(SRCS:.cpp=.o)
+main.o: main.cpp
+	g++ -c main.cpp
 
-all: main 
-
-main: $(OBJS)
-	$(CC) $(OBJS) -o main $(LDFLAGS)
-
-%.o: %.cpp
-	$(CC) $(CFLAGS) -c $< -o $@
+tetromino.o: tetromino.cpp
+	g++ -c tetromino.cpp
 
 clean:
-	del -f $(OBJS) main
+	rm -f *.o sfml-app

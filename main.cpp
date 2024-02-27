@@ -56,8 +56,7 @@ sf::Color get_shape_color(char shape){
     exit(1);
 }
 
-//function to calculate the score at level 0(We will accomadate when we will implement the levels)
-
+// function to calculate the score at level 0 (We will accomadate when we will implement the levels)
 int calculate_points(int cleared_lines) {
     switch(cleared_lines) {
         case 1: return 40;
@@ -68,11 +67,8 @@ int calculate_points(int cleared_lines) {
     }
 }
 
-
-
-
 int main(){
-    // 
+    // guarantee we only move once per click
     bool already_moved = false;
     
     //define the player score
@@ -87,7 +83,7 @@ int main(){
 
     // define the police
     sf::Font font;
-    if (!font.loadFromFile("font/Roboto-Black.ttf")) {
+    if (!font.loadFromFile("font/PixeloidSans.ttf")) {
         std::cerr << "Error loading font" << std::endl;
         exit(1);
     }
