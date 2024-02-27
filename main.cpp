@@ -12,6 +12,7 @@
 #include"globals.hpp"
 
 int CELL_SIZE = 8;
+int START_FALL_SPEED = 32;
 
 // get a random char which represents each shape
 char get_random_shape(){
@@ -70,9 +71,17 @@ int calculate_points(int cleared_lines) {
 int main(){
     // guarantee we only move once per click
     bool already_moved = false;
+    bool soft_drop_timer = false;
+
+    unsigned char current_fall_speed = START_FALL_SPEED;
+    unsigned char fall_timer = 0;
+    unsigned char move_timer = 0;
     
     //define the player score
     int score = 0;
+
+    // variable which defines the level
+    int total_lines_cleared = 0;
 
     // the game matrix on which we will write all the information
     std::vector<std::vector<unsigned char>> matrix(WINDOW_WIDTH, std::vector<unsigned char>(WINDOW_HEIGHT));
@@ -81,18 +90,17 @@ int main(){
     sf::RenderWindow window(sf::VideoMode(2 * WINDOW_WIDTH * PIXELS_PER_CELL * WINDOW_RESIZE, WINDOW_HEIGHT * PIXELS_PER_CELL * WINDOW_RESIZE), "Tetris v1.2");
     window.setView(sf::View(sf::FloatRect(0, 0, 2 * PIXELS_PER_CELL * (WINDOW_WIDTH + 1), PIXELS_PER_CELL * (WINDOW_HEIGHT))));       
 
-    // define the police
+    // define the font
     sf::Font font;
     if (!font.loadFromFile("font/PixeloidSans.ttf")) {
         std::cerr << "Error loading font" << std::endl;
         exit(1);
     }
-
     sf::Text scoreText;
     scoreText.setFont(font);
-    scoreText.setCharacterSize(24); // CARACTERS SIZE
-    scoreText.setFillColor(sf::Color::White); // TEXT COLORE
-    scoreText.setPosition(((round(WINDOW_WIDTH * 1.5)) * PIXELS_PER_CELL), ((round(WINDOW_WIDTH * 1.5)) * PIXELS_PER_CELL )); // POSITION
+    scoreText.setCharacterSize(24); // font size
+    scoreText.setFillColor(font_color); // text color
+    scoreText.setPosition(((int(WINDOW_WIDTH * 1.5)) * PIXELS_PER_CELL), ((int(WINDOW_WIDTH * 1.5)) * PIXELS_PER_CELL )); // POSITION
    
     // the random seed to generate the tetrominos
     srand(time(0));
@@ -100,19 +108,16 @@ int main(){
     // SFML event
     sf::Event event;
 
-    //intialize matrix function
-
-
     // current falling tetromino
-    Tetromino current_tetromino('I', rand() % 7);
-    // next tetramino
-    Tetromino next_tetromino('I', 0);
+    Tetromino current_tetromino(get_random_shape(), rand() % 7);
+    // next tetromino
+    Tetromino next_tetromino(get_random_shape(), 0);
 
     // record the current time
     std::chrono::time_point<std::chrono::steady_clock> previous_time = std::chrono::steady_clock::now();
     unsigned int lag = 0;
 
-    while (window.isOpen()){
+    while(window.isOpen()){
         // record the time difference
         unsigned delta_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - previous_time).count();
         lag += delta_time;
@@ -198,6 +203,7 @@ int main(){
             }
 
             // draw the vertical line separating the board
+
             sf::RectangleShape vertical_line(sf::Vector2f(PIXELS_PER_CELL / 5, WINDOW_HEIGHT * PIXELS_PER_CELL));
             vertical_line.setFillColor(sf::Color::White);
             vertical_line.setPosition((WINDOW_WIDTH) * PIXELS_PER_CELL + round((2 * PIXELS_PER_CELL) / 5), 0);
@@ -219,54 +225,88 @@ int main(){
 
             // display the current drawn window
             scoreText.setString("Score: " + std::to_string(score));
-
             window.draw(scoreText);
             window.display();
             
-            // update the tetromino
-            if(not(current_tetromino.move_down(matrix))){
-                current_tetromino.update_matrix(matrix);
-                // Count the lines cleared in this move
-                int cleared_lines = 0;
-                for(unsigned char row= 0; row < WINDOW_HEIGHT; row++)
-                {
-                    bool clear_line = 1;
-                    for(unsigned char col = 0; col < WINDOW_WIDTH; col++)
-                    {
-                        if(matrix[col][row] == 0)
-                        {
-                            clear_line = 0;
-                            break;
+            if(fall_timer == current_fall_speed){
+                fall_timer = 0;
+                if(not(current_tetromino.move_down(matrix))){
+                    current_tetromino.update_matrix(matrix);
+                    // Count the lines cleared in this move
+                    int cleared_lines = 0;
+                    for(unsigned char row = 0; row < WINDOW_HEIGHT; row++){
+                        bool clear_line = 1;
+                        for(unsigned char col = 0; col < WINDOW_WIDTH; col++){
+                            if(matrix[col][row] == 0){
+                                clear_line = 0;
+                                break;
+                            }
+                        }
+                        if(clear_line == 1){
+                            cleared_lines++;
+                            for(unsigned char col = 0; col < WINDOW_WIDTH; col++){
+                                matrix[col][row] = 0;
+                                for(unsigned char upwards_row = row; upwards_row > 0; upwards_row--){
+                                    matrix[col][upwards_row] = matrix[col][upwards_row - 1];
+                                    matrix[col][upwards_row - 1] = 0;
+                                }
+                            }                        
                         }
                     }
-                    if(clear_line == 1)
-                    {
-                        cleared_lines++;
-                        for(unsigned char col = 0; col < WINDOW_WIDTH; col++)        
-                        {
-                            matrix[col][row] = 0;
+                    current_tetromino = Tetromino(next_tetromino.get_shape(), rand() % 7);
+                    next_tetromino = Tetromino(get_random_shape(), 0);
+                    if(current_tetromino.reset(next_tetromino.get_shape(), matrix) == 0){
+                        // CREATE GAME OVER SCREEN
+                        for(unsigned char i = 0; i< WINDOW_WIDTH; i++){
+                            for(unsigned char j = 0; j< WINDOW_HEIGHT; j++){
+                                matrix[i][j] = 0;
+                            }
                         }
                     }
+                    score += calculate_points(cleared_lines);
+                    total_lines_cleared += cleared_lines;
                 }
-                current_tetromino = Tetromino(next_tetromino.get_shape(), rand() % 7);
-                next_tetromino = Tetromino('I', 0);
-                if(next_tetromino.reset(next_tetromino.get_shape(), matrix) == 0)
-                {
-                      //put all the values to zero
-                    for(unsigned char i = 0; i< WINDOW_WIDTH; i++){
-                        for(unsigned char j = 0; j< WINDOW_HEIGHT; j++){
-                            matrix[i][j] = 0;
-                    }
-                    }
-                }
-                if(cleared_lines > 0) {
-                score = score + calculate_points(cleared_lines);
-               
-
-                }
-
-            
+            }else{
+                fall_timer++;
             }
+
+            // update the tetromino
+            // if(not(current_tetromino.move_down(matrix))){
+            //     current_tetromino.update_matrix(matrix);
+            //     // Count the lines cleared in this move
+            //     int cleared_lines = 0;
+            //     for(unsigned char row = 0; row < WINDOW_HEIGHT; row++){
+            //         bool clear_line = 1;
+            //         for(unsigned char col = 0; col < WINDOW_WIDTH; col++){
+            //             if(matrix[col][row] == 0){
+            //                 clear_line = 0;
+            //                 break;
+            //             }
+            //         }
+            //         if(clear_line == 1){
+            //             cleared_lines++;
+            //             for(unsigned char col = 0; col < WINDOW_WIDTH; col++){
+            //                 matrix[col][row] = 0;
+            //                 for(unsigned char upwards_row = row; upwards_row > 0; upwards_row--){
+            //                     matrix[col][upwards_row] = matrix[col][upwards_row - 1];
+            //                     matrix[col][upwards_row - 1] = 0;
+            //                 }
+            //             }                        
+            //         }
+            //     }
+            //     current_tetromino = Tetromino(next_tetromino.get_shape(), rand() % 7);
+            //     next_tetromino = Tetromino(get_random_shape(), 0);
+            //     if(current_tetromino.reset(next_tetromino.get_shape(), matrix) == 0){
+            //         // CREATE GAME OVER SCREEN
+            //         for(unsigned char i = 0; i< WINDOW_WIDTH; i++){
+            //             for(unsigned char j = 0; j< WINDOW_HEIGHT; j++){
+            //                 matrix[i][j] = 0;
+            //             }
+            //         }
+            //     }
+            //     score += calculate_points(cleared_lines);
+            //     total_lines_cleared += cleared_lines;
+            // }
         
            
         }

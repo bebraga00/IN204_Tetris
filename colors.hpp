@@ -13,5 +13,6 @@ sf::Color color_Z(28, 156, 66, 255);
 sf::Color color_L(255, 151, 0, 255);
 sf::Color color_J(255, 241, 0, 255);
 sf::Color color_T(183, 0, 255, 255);
+sf::Color font_color(255, 255, 255, 255);
 
 #endif
