@@ -8,7 +8,10 @@ constexpr unsigned int PIXELS_PER_CELL = 20;    // how many pixels in one tetris
 constexpr unsigned int WINDOW_RESIZE = 2;       // window resize value
 
 // timing constants
-constexpr unsigned int FRAME_DURATION = 16667;  // frame duration in miliseconds
-constexpr unsigned int START_FALL_SPEED = 32;   // initial fall period in frames
+constexpr unsigned int FRAME_DURATION = 16667;  // frame duration in microseconds
+constexpr unsigned int START_FALL_SPEED = 48;   // initial fall period in frames
+
+// fall periods per level
+constexpr unsigned char LEVEL_SPEEDS[] = {48,43,38,33,28,23,18,13,8,6,5,5,5,4,4,4,3,3,3,2,2,2,2,2,2,2,2,2,2};
 
 #endif

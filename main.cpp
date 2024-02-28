@@ -7,8 +7,8 @@
 #include <iostream>
 
 #include "parameters.hpp"      // window and cell dimensions definitions
-#include "colors.hpp"      // RGBA colors definitions
-#include "tetromino.hpp"   // blocks definitions
+#include "colors.hpp"          // RGBA colors definitions
+#include "tetromino.hpp"       // blocks definitions
 #include "globals.hpp"
 
 // get a random char which represents each shape
@@ -75,13 +75,13 @@ sf::Color get_border_color(char shape){
     exit(1);
 }
 
-// function to calculate the score at level 0 (We will accomadate when we will implement the levels)
-int calculate_points(int cleared_lines) {
+// calculate the number of points per round
+int calculate_points(int cleared_lines, int level) {
     switch(cleared_lines) {
-        case 1: return 40;
-        case 2: return 100;
-        case 3: return 300;
-        case 4: return 1200;
+        case 1: return 40 * (level + 1);
+        case 2: return 100 * (level + 1);
+        case 3: return 300 * (level + 1);
+        case 4: return 1200 * (level + 1);
         default: return 0;
     }
 }
@@ -129,6 +129,18 @@ void draw_vertical_line(sf::RenderWindow& window, sf::RectangleShape& cell){
     }
 }
 
+int get_level(int total_lines_cleared){
+    return (floor(float(total_lines_cleared) / 10.0));
+}
+
+unsigned char get_current_fall_speed(int level){
+    if(level >= 29){
+        return 1;
+    }else{
+        return LEVEL_SPEEDS[level];
+    }
+}
+
 int main(){
     // guarantee we only move once per click
     bool already_moved = false;
@@ -156,11 +168,10 @@ int main(){
         std::cerr << "Error loading font" << std::endl;
         exit(1);
     }
-    sf::Text scoreText;
-    scoreText.setFont(font);
-    scoreText.setCharacterSize(24); // font size
-    scoreText.setFillColor(font_color); // text color
-    scoreText.setPosition(((int(WINDOW_WIDTH * 1.2)) * PIXELS_PER_CELL), ((int(WINDOW_WIDTH * 1.5)) * PIXELS_PER_CELL )); // POSITION
+    sf::Text text;
+    text.setFont(font);
+    text.setCharacterSize(24);     // font size
+    text.setFillColor(font_color); // text color
    
     // the random seed to generate the tetrominos
     srand(time(0));
@@ -267,8 +278,12 @@ int main(){
             draw_vertical_line(window, cell);
 
             // display the text score
-            scoreText.setString("Score: " + std::to_string(score));
-            window.draw(scoreText);
+            text.setPosition(((int(WINDOW_WIDTH * 1.2)) * PIXELS_PER_CELL), ((int(WINDOW_WIDTH * 1.5)) * PIXELS_PER_CELL )); // POSITION
+            text.setString("Score: " + std::to_string(score));
+            window.draw(text);
+            text.setPosition(((int(WINDOW_WIDTH * 1.2)) * PIXELS_PER_CELL), ((int(WINDOW_WIDTH * 1.2)) * PIXELS_PER_CELL ));
+            text.setString("Level: " + std::to_string(get_level(total_lines_cleared)));
+            window.draw(text);
 
             window.display();
             
@@ -307,8 +322,10 @@ int main(){
                             }
                         }
                     }
-                    score += calculate_points(cleared_lines);
+                    score += calculate_points(cleared_lines, get_level(total_lines_cleared));
                     total_lines_cleared += cleared_lines;
+
+                    current_fall_speed = get_current_fall_speed(get_level(total_lines_cleared));
                 }
             }else{
                 fall_timer++;
