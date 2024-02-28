@@ -147,7 +147,7 @@ int main(){
 
     // define window dimensions, name and view
     sf::RenderWindow window(sf::VideoMode(2 * WINDOW_WIDTH * PIXELS_PER_CELL * WINDOW_RESIZE, WINDOW_HEIGHT * PIXELS_PER_CELL * WINDOW_RESIZE), "Tetris v1.2");
-    window.setView(sf::View(sf::FloatRect(0, 0, 2 * PIXELS_PER_CELL * (WINDOW_WIDTH + 1), PIXELS_PER_CELL * (WINDOW_HEIGHT))));       
+    window.setView(sf::View(sf::FloatRect(0, 0, 2 * PIXELS_PER_CELL * (WINDOW_WIDTH + 0.5), PIXELS_PER_CELL * (WINDOW_HEIGHT))));       
 
     // REVIEW FONT RESOLUTION AND BLURRYNESS
     // define the font
@@ -160,7 +160,7 @@ int main(){
     scoreText.setFont(font);
     scoreText.setCharacterSize(24); // font size
     scoreText.setFillColor(font_color); // text color
-    scoreText.setPosition(((int(WINDOW_WIDTH * 1.5)) * PIXELS_PER_CELL), ((int(WINDOW_WIDTH * 1.5)) * PIXELS_PER_CELL )); // POSITION
+    scoreText.setPosition(((int(WINDOW_WIDTH * 1.2)) * PIXELS_PER_CELL), ((int(WINDOW_WIDTH * 1.5)) * PIXELS_PER_CELL )); // POSITION
    
     // the random seed to generate the tetrominos
     srand(time(0));
