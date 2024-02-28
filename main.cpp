@@ -86,6 +86,20 @@ int calculate_points(int cleared_lines, int level) {
     }
 }
 
+// calculate the current level
+int get_level(int total_lines_cleared){
+    return (floor(float(total_lines_cleared) / 10.0));
+}
+
+// obtain the current fall speed
+unsigned char get_current_fall_speed(int level){
+    if(level >= 29){
+        return 1;
+    }else{
+        return LEVEL_SPEEDS[level];
+    }
+}
+
 void draw_window_matrix(std::vector<std::vector<unsigned char>>& matrix, sf::RenderWindow& window, sf::RectangleShape& cell){
     for(int i = 0; i < WINDOW_WIDTH; i++){
         for(int j = 0; j < WINDOW_HEIGHT; j++){
@@ -115,7 +129,7 @@ void draw_next_tetromino(Tetromino& next_tetromino, sf::RenderWindow& window, sf
     cell.setFillColor(get_shape_color(next_tetromino.get_shape()));
     cell.setOutlineColor(get_border_color(next_tetromino.get_shape()));
     for(Position& mino : next_tetromino.get_tetromino_matrix()){
-        cell.setPosition((mino.x + round(WINDOW_WIDTH * 1.5)) * PIXELS_PER_CELL, (mino.y + round(WINDOW_WIDTH * 0.5)) * PIXELS_PER_CELL);
+        cell.setPosition((mino.x + round(WINDOW_WIDTH * 1.4)) * PIXELS_PER_CELL, (mino.y + round(WINDOW_WIDTH * 1.0)) * PIXELS_PER_CELL);
         window.draw(cell);
     }
 }
@@ -129,16 +143,24 @@ void draw_vertical_line(sf::RenderWindow& window, sf::RectangleShape& cell){
     }
 }
 
-int get_level(int total_lines_cleared){
-    return (floor(float(total_lines_cleared) / 10.0));
+void display_score(sf::Text& text, int score, sf::RenderWindow& window){
+    text.setPosition(((int(WINDOW_WIDTH * 1.2)) * PIXELS_PER_CELL), ((int(WINDOW_WIDTH * 0.2)) * PIXELS_PER_CELL )); // POSITION
+    std::string scoreString = std::to_string(score);
+    text.setString("SCORE\n" + std::string(6 - scoreString.length(), '0') + scoreString);
+    window.draw(text);
 }
 
-unsigned char get_current_fall_speed(int level){
-    if(level >= 29){
-        return 1;
-    }else{
-        return LEVEL_SPEEDS[level];
-    }
+void display_level(sf::Text& text, int level, sf::RenderWindow& window){
+    text.setPosition(((int(WINDOW_WIDTH * 1.2)) * PIXELS_PER_CELL), ((int(WINDOW_WIDTH * 1.6)) * PIXELS_PER_CELL ));
+    std::string levelString = std::to_string(level);
+    text.setString("LEVEL \n  " + std::string(2 - levelString.length(), '0') + levelString);
+    window.draw(text);
+}
+
+void display_next_shape_text(sf::Text& text, sf::RenderWindow& window){
+    text.setPosition(((int(WINDOW_WIDTH * 1.2)) * PIXELS_PER_CELL), ((int(WINDOW_WIDTH * 0.7)) * PIXELS_PER_CELL ));
+    text.setString("NEXT");
+    window.draw(text);
 }
 
 int main(){
@@ -161,16 +183,18 @@ int main(){
     sf::RenderWindow window(sf::VideoMode(2 * WINDOW_WIDTH * PIXELS_PER_CELL * WINDOW_RESIZE, WINDOW_HEIGHT * PIXELS_PER_CELL * WINDOW_RESIZE), "Tetris v1.2");
     window.setView(sf::View(sf::FloatRect(0, 0, 2 * PIXELS_PER_CELL * (WINDOW_WIDTH + 0.5), PIXELS_PER_CELL * (WINDOW_HEIGHT))));       
 
-    // REVIEW FONT RESOLUTION AND BLURRYNESS
-    // define the font
+    // import the font
     sf::Font font;
-    if (!font.loadFromFile("font/PixeloidSans.ttf")) {
+    if (!font.loadFromFile("font/Pixel_NES.ttf")) {
         std::cerr << "Error loading font" << std::endl;
         exit(1);
     }
+    // ensure font is not blurry
+    const_cast<sf::Texture&>(font.getTexture(FONT_SIZE)).setSmooth(false);
+
     sf::Text text;
     text.setFont(font);
-    text.setCharacterSize(24);     // font size
+    text.setCharacterSize(FONT_SIZE);     // font size
     text.setFillColor(font_color); // text color
    
     // the random seed to generate the tetrominos
@@ -198,13 +222,14 @@ int main(){
         while(lag >= FRAME_DURATION){
             lag -= FRAME_DURATION;
 
-            // close the window
             while (window.pollEvent(event)){
                 switch(event.type){
+                    // close the window
                     case (sf::Event::Closed):{
                         window.close();
                         break;
                     }
+                    // guarantee we only move once when the key is pressed
                     case sf::Event::KeyPressed:{
                         if(not(already_moved)){
                             switch(event.key.code){
@@ -220,7 +245,7 @@ int main(){
                                 }
                                 case(sf::Keyboard::Down):{
                                     already_moved = true;
-                                    fall_timer = current_fall_speed;
+                                    fall_timer = current_fall_speed; // end the current round
                                     current_tetromino.rush_down(matrix);    
                                     break;
                                 }
@@ -235,6 +260,7 @@ int main(){
                             break;
                         }
                     }
+                    // reset the movements 
                     case sf::Event::KeyReleased:{
                         switch(event.key.code){
                             case(sf::Keyboard::Right):{
@@ -277,13 +303,10 @@ int main(){
             // draw the vertical line separating the board 
             draw_vertical_line(window, cell);
 
-            // display the text score
-            text.setPosition(((int(WINDOW_WIDTH * 1.2)) * PIXELS_PER_CELL), ((int(WINDOW_WIDTH * 1.5)) * PIXELS_PER_CELL )); // POSITION
-            text.setString("Score: " + std::to_string(score));
-            window.draw(text);
-            text.setPosition(((int(WINDOW_WIDTH * 1.2)) * PIXELS_PER_CELL), ((int(WINDOW_WIDTH * 1.2)) * PIXELS_PER_CELL ));
-            text.setString("Level: " + std::to_string(get_level(total_lines_cleared)));
-            window.draw(text);
+            // display text
+            display_score(text, score, window);
+            display_level(text, get_level(total_lines_cleared), window);
+            display_next_shape_text(text, window);
 
             window.display();
             
