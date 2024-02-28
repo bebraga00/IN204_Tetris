@@ -4,7 +4,7 @@
 #include <SFML/Graphics.hpp>
 
 // light blue board background
-sf::Color background(48,48,72,127);
+sf::Color background(24,24,36,255);
 sf::Color line(120,120,120,255);
 sf::Color line_border(50,50,50,255);
 
@@ -28,5 +28,8 @@ sf::Color color_T_border(80,0,120,255);
 
 // font color
 sf::Color font_color(255, 255, 255, 255);
+
+// game over 
+sf::Color game_over_override(0,0,0,195);
 
 #endif

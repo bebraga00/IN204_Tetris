@@ -9,6 +9,10 @@ constexpr unsigned int WINDOW_HEIGHT      = 20;     // number of rows in tetris 
 constexpr unsigned int PIXELS_PER_CELL    = 20;     // how many pixels in one tetris cell
 constexpr unsigned int WINDOW_RESIZE      = 2;      // window resize value
 
+// view dimensions
+constexpr unsigned int VIEW_WIDTH         = 2 * PIXELS_PER_CELL * (WINDOW_WIDTH + 0.5);
+constexpr unsigned int VIEW_HEIGHT        = WINDOW_HEIGHT * PIXELS_PER_CELL;
+
 // timing constants
 constexpr unsigned int FRAME_DURATION     = 16667;  // frame duration in microseconds
 constexpr unsigned int START_FALL_SPEED   = 48;     // initial fall period in frames

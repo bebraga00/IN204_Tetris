@@ -182,7 +182,7 @@ int main(){
 
     // define window dimensions, name and view
     sf::RenderWindow window(sf::VideoMode(2 * WINDOW_WIDTH * PIXELS_PER_CELL * WINDOW_RESIZE, WINDOW_HEIGHT * PIXELS_PER_CELL * WINDOW_RESIZE), "Tetris v1.2");
-    window.setView(sf::View(sf::FloatRect(0, 0, 2 * PIXELS_PER_CELL * (WINDOW_WIDTH + 0.5), PIXELS_PER_CELL * (WINDOW_HEIGHT))));       
+    window.setView(sf::View(sf::FloatRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT)));
 
     // import the font
     sf::Font font;
@@ -339,12 +339,21 @@ int main(){
                     current_tetromino = Tetromino(next_tetromino.get_shape(), rand() % 7);
                     next_tetromino = Tetromino(get_random_shape(), 0);
                     if(current_tetromino.reset(next_tetromino.get_shape(), matrix) == 0){
-                        // CREATE GAME OVER SCREEN
-                        // for(unsigned char i = 0; i< WINDOW_WIDTH; i++){
-                        //     for(unsigned char j = 0; j< WINDOW_HEIGHT; j++){
-                        //         matrix[i][j] = 0;
-                        //     }
-                        // }
+                        sf::RectangleShape new_cell(sf::Vector2f(PIXELS_PER_CELL, PIXELS_PER_CELL));
+                        new_cell.setFillColor(game_over_override);
+                        new_cell.setOutlineColor(game_over_override);
+                        for(int i = 0; i < (VIEW_HEIGHT / PIXELS_PER_CELL); i++){
+                            for(int j = 0; j < (VIEW_WIDTH / PIXELS_PER_CELL); j++){
+                                new_cell.setPosition(i * PIXELS_PER_CELL, j * PIXELS_PER_CELL);
+                                window.draw(new_cell);
+                            }
+                        }
+
+                        text.setPosition(((int(WINDOW_WIDTH * 0.7)) * PIXELS_PER_CELL), int(VIEW_HEIGHT / 2));
+                        text.setString("GAME OVER");
+                        window.draw(text);
+
+                        window.display();
                         while(1){
                             window.pollEvent(event);
                             if(event.type == sf::Event::KeyPressed){
