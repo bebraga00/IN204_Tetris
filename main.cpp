@@ -104,7 +104,7 @@ void draw_window_matrix(std::vector<std::vector<unsigned char>>& matrix, sf::Ren
     for(int i = 0; i < WINDOW_WIDTH; i++){
         for(int j = 0; j < WINDOW_HEIGHT; j++){
             if(matrix[i][j] == 0){
-                cell.setFillColor(background);
+                cell.setFillColor(sf::Color::Black);
                 cell.setOutlineColor(background);
             }else{
                 cell.setFillColor(get_shape_color(matrix[i][j]));
@@ -143,10 +143,11 @@ void draw_vertical_line(sf::RenderWindow& window, sf::RectangleShape& cell){
     }
 }
 
-void display_score(sf::Text& text, int score, sf::RenderWindow& window){
-    text.setPosition(((int(WINDOW_WIDTH * 1.2)) * PIXELS_PER_CELL), ((int(WINDOW_WIDTH * 0.2)) * PIXELS_PER_CELL )); // POSITION
+void display_score(sf::Text& text, int score, int high_score, sf::RenderWindow& window){
+    text.setPosition(((int(WINDOW_WIDTH * 1.2)) * PIXELS_PER_CELL), ((int(WINDOW_WIDTH * 0.1)) * PIXELS_PER_CELL)); // POSITION
     std::string scoreString = std::to_string(score);
-    text.setString("SCORE\n" + std::string(6 - scoreString.length(), '0') + scoreString);
+    std::string high_scoreString = std::to_string(high_score);    
+    text.setString("HIGH SCORE\n" + std::string(6 - high_scoreString.length(), '0') + high_scoreString + "\nSCORE\n" + std::string(6 - scoreString.length(), '0') + scoreString);
     window.draw(text);
 }
 
@@ -304,7 +305,7 @@ int main(){
             draw_vertical_line(window, cell);
 
             // display text
-            display_score(text, score, window);
+            display_score(text, score, 0, window);
             display_level(text, get_level(total_lines_cleared), window);
             display_next_shape_text(text, window);
 
@@ -339,10 +340,20 @@ int main(){
                     next_tetromino = Tetromino(get_random_shape(), 0);
                     if(current_tetromino.reset(next_tetromino.get_shape(), matrix) == 0){
                         // CREATE GAME OVER SCREEN
-                        for(unsigned char i = 0; i< WINDOW_WIDTH; i++){
-                            for(unsigned char j = 0; j< WINDOW_HEIGHT; j++){
-                                matrix[i][j] = 0;
-                            }
+                        // for(unsigned char i = 0; i< WINDOW_WIDTH; i++){
+                        //     for(unsigned char j = 0; j< WINDOW_HEIGHT; j++){
+                        //         matrix[i][j] = 0;
+                        //     }
+                        // }
+                        while(1){
+                            window.pollEvent(event);
+                            if(event.type == sf::Event::KeyPressed){
+                                window.close();
+                                break;
+                            }else if(event.type == sf::Event::Closed){
+                                window.close();
+                                break;
+                            }   
                         }
                     }
                     score += calculate_points(cleared_lines, get_level(total_lines_cleared));

@@ -1,6 +1,8 @@
 #ifndef PARAMETERS_HPP
 #define PARAMETERS_HPP
 
+// level and scoring information taken from https://tetris.fandom.com/wiki/Tetris_(NES,_Nintendo) and https://en.wikipedia.org/wiki/Tetris_(NES_video_game)# 
+
 // window dimensions
 constexpr unsigned int WINDOW_WIDTH       = 10;     // number of columns in tetris matrix
 constexpr unsigned int WINDOW_HEIGHT      = 20;     // number of rows in tetris matrix
