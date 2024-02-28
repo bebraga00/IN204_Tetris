@@ -3,16 +3,30 @@
 
 #include <SFML/Graphics.hpp>
 
-sf::Color grey_background(232, 232, 232, 80);
-sf::Color color_O(40, 55, 245, 255);
-sf::Color color_I(245, 39, 39, 255);
-sf::Color color_S(135, 255, 171, 255);
-// sf::Color color_S(255, 0, 0, 217);
-sf::Color color_Z(28, 156, 66, 255);
-// sf::Color color_Z(255, 124, 0, 217);
-sf::Color color_L(255, 151, 0, 255);
-sf::Color color_J(255, 241, 0, 255);
-sf::Color color_T(183, 0, 255, 255);
+// light blue board background
+sf::Color background(48,48,72,127);
+sf::Color line(120,120,120,255);
+sf::Color line_border(50,50,50,255);
+
+// shape colors
+sf::Color color_O(0,0,240,255);     // blue
+sf::Color color_I(240,0,0,255);     // red
+sf::Color color_S(0,240,240,255);   // blue-green
+sf::Color color_Z(0,240,0,255);     // green
+sf::Color color_L(240,160,0,255);   // orange
+sf::Color color_J(240,240,0,255);   // yellow
+sf::Color color_T(160,0,240,255);   // purple
+
+// shape border colors (darker)
+sf::Color color_O_border(0,0,120,255);
+sf::Color color_I_border(120,0,0,255);
+sf::Color color_S_border(0,120,120,255);
+sf::Color color_Z_border(0,120,0,255);
+sf::Color color_L_border(120,80,0,255);
+sf::Color color_J_border(120,120,0,255);
+sf::Color color_T_border(80,0,120,255);
+
+// font color
 sf::Color font_color(255, 255, 255, 255);
 
 #endif

@@ -3,7 +3,7 @@
 
 #include "tetromino.hpp"
 #include "globals.hpp"
-#include "window.hpp"
+#include "parameters.hpp"
 #include <vector>
 #include <stdio.h>
 #include <iostream>
