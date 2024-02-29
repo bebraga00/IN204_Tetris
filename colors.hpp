@@ -30,6 +30,6 @@ sf::Color color_T_border(80,0,120,255);
 sf::Color font_color(255, 255, 255, 255);
 
 // game over 
-sf::Color game_over_override(0,0,0,195);
+sf::Color game_over_override(0,0,0,200);
 
 #endif

@@ -339,6 +339,7 @@ int main(){
                     current_tetromino = Tetromino(next_tetromino.get_shape(), rand() % 7);
                     next_tetromino = Tetromino(get_random_shape(), 0);
                     if(current_tetromino.reset(next_tetromino.get_shape(), matrix) == 0){
+
                         sf::RectangleShape new_cell(sf::Vector2f(PIXELS_PER_CELL, PIXELS_PER_CELL));
                         new_cell.setFillColor(game_over_override);
                         new_cell.setOutlineColor(game_over_override);
@@ -349,10 +350,18 @@ int main(){
                             }
                         }
 
-                        text.setPosition(((int(WINDOW_WIDTH * 0.7)) * PIXELS_PER_CELL), int(VIEW_HEIGHT / 2));
+                        text.setPosition((int(VIEW_WIDTH * 0.33)), int(VIEW_HEIGHT * 0.5));
                         text.setString("GAME OVER");
                         window.draw(text);
+                        display_score(text, score, 0, window);
+                        
 
+
+                        window.display();
+                        sleep(2.5);
+                        text.setString("PRESS ANY KEY TO CONTINUE");
+                        text.setPosition(((int(WINDOW_WIDTH * 0.15)) * PIXELS_PER_CELL), int(VIEW_HEIGHT * 0.6));
+                        window.draw(text);
                         window.display();
                         while(1){
                             window.pollEvent(event);
