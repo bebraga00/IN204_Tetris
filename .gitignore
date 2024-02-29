@@ -2,3 +2,7 @@
 makefile
 .vscode
 
+*.o
+.vscode/settings.json
+main.exe
+makefile
