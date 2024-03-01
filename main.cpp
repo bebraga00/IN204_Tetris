@@ -5,6 +5,7 @@
 #include <chrono>
 #include <math.h>
 #include <iostream>
+#include <fstream>
 
 #include "parameters.hpp"      // window and cell dimensions definitions
 #include "colors.hpp"          // RGBA colors definitions
@@ -134,6 +135,15 @@ void draw_next_tetromino(Tetromino& next_tetromino, sf::RenderWindow& window, sf
     }
 }
 
+void draw_preview_tetromino(Tetromino& preview_tetromino, sf::RenderWindow& window, sf::RectangleShape& cell){
+    cell.setFillColor(sf::Color(0,0,0,0));
+    cell.setOutlineColor(get_border_color(preview_tetromino.get_shape()));
+    for(Position& mino : preview_tetromino.get_tetromino_matrix()){
+        cell.setPosition(mino.x * PIXELS_PER_CELL, mino.y * PIXELS_PER_CELL);
+        window.draw(cell);
+    }
+}
+
 void draw_vertical_line(sf::RenderWindow& window, sf::RectangleShape& cell){
     cell.setFillColor(line);
     cell.setOutlineColor(line_border);
@@ -151,6 +161,31 @@ void display_score(sf::Text& text, int score, int high_score, sf::RenderWindow& 
     window.draw(text);
 }
 
+void draw_game_over_screen(sf::RenderWindow& window, sf::Text& text, int score, int highscore){
+    sf::RectangleShape new_cell(sf::Vector2f(PIXELS_PER_CELL, PIXELS_PER_CELL));
+    new_cell.setFillColor(game_over_override);
+    new_cell.setOutlineColor(game_over_override);
+    
+    for(int i = 0; i < (VIEW_HEIGHT / PIXELS_PER_CELL); i++){
+        for(int j = 0; j < (VIEW_WIDTH / PIXELS_PER_CELL); j++){
+            new_cell.setPosition(i * PIXELS_PER_CELL, j * PIXELS_PER_CELL);
+            window.draw(new_cell);
+        }
+    }
+
+    text.setPosition((int(VIEW_WIDTH * 0.33)), int(VIEW_HEIGHT * 0.5));
+    text.setString("GAME OVER");
+    window.draw(text);
+    display_score(text, score, highscore, window);
+    window.display();
+
+    sleep(2.5);
+    text.setString("PRESS ANY KEY TO CONTINUE");
+    text.setPosition(((int(WINDOW_WIDTH * 0.15)) * PIXELS_PER_CELL), int(VIEW_HEIGHT * 0.6));
+    window.draw(text);
+    window.display();
+}
+
 void display_level(sf::Text& text, int level, sf::RenderWindow& window){
     text.setPosition(((int(WINDOW_WIDTH * 1.2)) * PIXELS_PER_CELL), ((int(WINDOW_WIDTH * 1.6)) * PIXELS_PER_CELL ));
     std::string levelString = std::to_string(level);
@@ -164,6 +199,18 @@ void display_next_shape_text(sf::Text& text, sf::RenderWindow& window){
     window.draw(text);
 }
 
+void save_highscore(int score, int highscore){
+    if(score > highscore){
+        std::ofstream output_file("highscore.txt");
+        if (!output_file.is_open()) {
+            std::cerr << "Error: Unable to open the highscore file." << std::endl;
+            exit(1); 
+        }
+        output_file << score; 
+        output_file.close();
+    }
+}
+
 int main(){
     // guarantee we only move once per click
     bool already_moved = false;
@@ -174,6 +221,16 @@ int main(){
     
     //define the player score
     int score = 0;
+    // define and search the current highscore
+    int highscore = 0;
+    std::ifstream entry_file("highscore.txt");
+    if (!entry_file.is_open()) {
+        std::cerr << "Error: Unable to open the highscore file." << std::endl;
+        exit(1); 
+    }
+    entry_file >> highscore; 
+    entry_file.close();
+
     // variable which defines the level
     int total_lines_cleared = 0;
 
@@ -205,9 +262,13 @@ int main(){
     sf::Event event;
 
     // current falling tetromino
-    Tetromino current_tetromino(get_random_shape(), rand() % 7);
+    int offset = rand() % 7;
+    Tetromino current_tetromino(get_random_shape(), offset);
     // next tetromino
     Tetromino next_tetromino(get_random_shape(), 0);
+    // preview tetromino
+    Tetromino preview_tetromino(current_tetromino.get_shape(), offset);
+    preview_tetromino.rush_down(matrix);
 
     // record the current time
     std::chrono::time_point<std::chrono::steady_clock> previous_time = std::chrono::steady_clock::now();
@@ -227,6 +288,7 @@ int main(){
                 switch(event.type){
                     // close the window
                     case (sf::Event::Closed):{
+                        save_highscore(score, highscore);
                         window.close();
                         break;
                     }
@@ -237,11 +299,15 @@ int main(){
                                 case(sf::Keyboard::Right):{
                                     already_moved = true;
                                     current_tetromino.move_right(matrix);
+                                    preview_tetromino = current_tetromino;
+                                    preview_tetromino.rush_down(matrix); 
                                     break;
                                 }
                                 case(sf::Keyboard::Left):{
                                     already_moved = true;
                                     current_tetromino.move_left(matrix);
+                                    preview_tetromino = current_tetromino;
+                                    preview_tetromino.rush_down(matrix); 
                                     break;
                                 }
                                 case(sf::Keyboard::Down):{
@@ -253,6 +319,8 @@ int main(){
                                 case(sf::Keyboard::Up):{
                                     already_moved = true;
                                     current_tetromino.rotate(matrix);
+                                    preview_tetromino = current_tetromino;
+                                    preview_tetromino.rush_down(matrix); 
                                     break;
                                 }
                             }    
@@ -301,11 +369,14 @@ int main(){
             // draw the next tetromino
             draw_next_tetromino(next_tetromino, window, cell);
 
+            // draw the preview tetromino
+            draw_preview_tetromino(preview_tetromino, window, cell);
+
             // draw the vertical line separating the board 
             draw_vertical_line(window, cell);
 
             // display text
-            display_score(text, score, 0, window);
+            display_score(text, score, highscore, window);
             display_level(text, get_level(total_lines_cleared), window);
             display_next_shape_text(text, window);
 
@@ -336,33 +407,22 @@ int main(){
                             }                        
                         }
                     }
-                    current_tetromino = Tetromino(next_tetromino.get_shape(), rand() % 7);
+
+                    // update for next turn
+                    offset = rand() % 7;
+                    current_tetromino = Tetromino(next_tetromino.get_shape(), offset);
+                    preview_tetromino = Tetromino(current_tetromino.get_shape(), offset);
+                    preview_tetromino.rush_down(matrix);
                     next_tetromino = Tetromino(get_random_shape(), 0);
+                    score += calculate_points(cleared_lines, get_level(total_lines_cleared));
+                    total_lines_cleared += cleared_lines;
+                    current_fall_speed = get_current_fall_speed(get_level(total_lines_cleared));
+
+                    // if we can't reset, the game is over
                     if(current_tetromino.reset(next_tetromino.get_shape(), matrix) == 0){
-
-                        sf::RectangleShape new_cell(sf::Vector2f(PIXELS_PER_CELL, PIXELS_PER_CELL));
-                        new_cell.setFillColor(game_over_override);
-                        new_cell.setOutlineColor(game_over_override);
-                        for(int i = 0; i < (VIEW_HEIGHT / PIXELS_PER_CELL); i++){
-                            for(int j = 0; j < (VIEW_WIDTH / PIXELS_PER_CELL); j++){
-                                new_cell.setPosition(i * PIXELS_PER_CELL, j * PIXELS_PER_CELL);
-                                window.draw(new_cell);
-                            }
-                        }
-
-                        text.setPosition((int(VIEW_WIDTH * 0.33)), int(VIEW_HEIGHT * 0.5));
-                        text.setString("GAME OVER");
-                        window.draw(text);
-                        display_score(text, score, 0, window);
-                        
-
-
-                        window.display();
-                        sleep(2.5);
-                        text.setString("PRESS ANY KEY TO CONTINUE");
-                        text.setPosition(((int(WINDOW_WIDTH * 0.15)) * PIXELS_PER_CELL), int(VIEW_HEIGHT * 0.6));
-                        window.draw(text);
-                        window.display();
+                        save_highscore(score, highscore);
+                        draw_game_over_screen(window, text, score, highscore);
+                        // detect any key press
                         while(1){
                             window.pollEvent(event);
                             if(event.type == sf::Event::KeyPressed){
@@ -373,11 +433,9 @@ int main(){
                                 break;
                             }   
                         }
+                        
+                        
                     }
-                    score += calculate_points(cleared_lines, get_level(total_lines_cleared));
-                    total_lines_cleared += cleared_lines;
-
-                    current_fall_speed = get_current_fall_speed(get_level(total_lines_cleared));
                 }
             }else{
                 fall_timer++;
