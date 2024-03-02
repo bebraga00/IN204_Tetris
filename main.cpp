@@ -1,4 +1,5 @@
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 #include <random>
 #include <time.h>
 #include <unistd.h>
@@ -11,6 +12,27 @@
 #include "colors.hpp"          // RGBA colors definitions
 #include "tetromino.hpp"       // blocks definitions
 #include "globals.hpp"
+// #include "parameters.cpp"
+
+int get_offset(char shape){
+        switch (shape){
+    case 'I':
+        return rand() % 5 + 1;
+    case 'O':
+        return rand() % 7 + 1;
+    case 'T':
+        return rand() % 6 + 1;
+    case 'S':
+        return rand() % 6 + 1;
+    case 'Z':
+        return rand() % 6 + 1;
+    case 'L':
+        return rand() % 6 + 1;
+    default:
+        return rand() % 6 + 1;
+    }
+    exit(1);
+}
 
 // get a random char which represents each shape
 char get_random_shape(){
@@ -101,9 +123,9 @@ unsigned char get_current_fall_speed(int level){
     }
 }
 
-void draw_window_matrix(std::vector<std::vector<unsigned char>>& matrix, sf::RenderWindow& window, sf::RectangleShape& cell){
-    for(int i = 0; i < WINDOW_WIDTH; i++){
-        for(int j = 0; j < WINDOW_HEIGHT; j++){
+void draw_matrix(std::vector<std::vector<unsigned char>>& matrix, sf::RenderWindow& window, sf::RectangleShape& cell, int width, int height){
+    for(int i = 0; i < width; i++){
+        for(int j = 0; j < height; j++){
             if(matrix[i][j] == 0){
                 cell.setFillColor(sf::Color::Black);
                 cell.setOutlineColor(background);
@@ -115,6 +137,37 @@ void draw_window_matrix(std::vector<std::vector<unsigned char>>& matrix, sf::Ren
             window.draw(cell);
         }
     }
+}
+
+void draw_array(const unsigned char matrix[VIEW_WIDTH / PIXELS_PER_CELL][VIEW_HEIGHT / PIXELS_PER_CELL], sf::RenderWindow& window, sf::RectangleShape& cell, int width, int height){
+    for(int i = 0; i < width; i++){
+        for(int j = 0; j < height; j++){
+            if(matrix[i][j] == 0){
+                cell.setFillColor(sf::Color::Black);
+                cell.setOutlineColor(background);
+            }else{
+                cell.setFillColor(get_shape_color(matrix[i][j]));
+                cell.setOutlineColor(get_border_color(matrix[i][j]));
+            }
+            cell.setPosition(PIXELS_PER_CELL * i, PIXELS_PER_CELL * j);
+            window.draw(cell);
+        }
+    }
+}
+
+void draw_welcome_page(sf::Text& text, sf::RenderWindow& window, sf::RectangleShape& cell){
+    draw_array(welcome_matrix, window, cell, VIEW_WIDTH, VIEW_HEIGHT);
+    text.setPosition((int(VIEW_WIDTH * 0.3)), int(VIEW_HEIGHT * 0.3));
+    text.setString("TETRIS");
+    window.draw(text);
+    text.setPosition((int(VIEW_WIDTH * 0.25)), int(VIEW_HEIGHT * 0.5));
+    text.setString("1. SINGLEPLAYER");
+    text.setCharacterSize(FONT_SIZE);
+    window.draw(text);
+    text.setPosition((int(VIEW_WIDTH * 0.27)), int(VIEW_HEIGHT * 0.6));
+    text.setString("2. MULTIPLAYER");
+    window.draw(text);
+    window.display();
 }
 
 void draw_current_tetromino(Tetromino& current_tetromino, sf::RenderWindow& window, sf::RectangleShape& cell){
@@ -161,7 +214,7 @@ void display_score(sf::Text& text, int score, int high_score, sf::RenderWindow& 
     window.draw(text);
 }
 
-void draw_game_over_screen(sf::RenderWindow& window, sf::Text& text, int score, int highscore){
+void draw_black_override_backgroud(sf::RenderWindow& window){
     sf::RectangleShape new_cell(sf::Vector2f(PIXELS_PER_CELL, PIXELS_PER_CELL));
     new_cell.setFillColor(game_over_override);
     new_cell.setOutlineColor(game_over_override);
@@ -172,6 +225,19 @@ void draw_game_over_screen(sf::RenderWindow& window, sf::Text& text, int score, 
             window.draw(new_cell);
         }
     }
+}
+
+void draw_pause_screen(sf::RenderWindow& window, sf::Text& text){
+    draw_black_override_backgroud(window);
+
+    text.setPosition((int(VIEW_WIDTH * 0.4)), int(VIEW_HEIGHT * 0.5));
+    text.setString("PAUSE");
+    window.draw(text);
+    window.display();
+}
+
+void draw_game_over_screen(sf::RenderWindow& window, sf::Text& text, int score, int highscore){
+    draw_black_override_backgroud(window);
 
     text.setPosition((int(VIEW_WIDTH * 0.33)), int(VIEW_HEIGHT * 0.5));
     text.setString("GAME OVER");
@@ -225,7 +291,7 @@ int main(){
     int highscore = 0;
     std::ifstream entry_file("highscore.txt");
     if (!entry_file.is_open()) {
-        std::cerr << "Error: Unable to open the highscore file." << std::endl;
+        std::cerr << "Error: Unable to open the highscore file" << std::endl;
         exit(1); 
     }
     entry_file >> highscore; 
@@ -241,6 +307,10 @@ int main(){
     sf::RenderWindow window(sf::VideoMode(2 * WINDOW_WIDTH * PIXELS_PER_CELL * WINDOW_RESIZE, WINDOW_HEIGHT * PIXELS_PER_CELL * WINDOW_RESIZE), "Tetris v1.2");
     window.setView(sf::View(sf::FloatRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT)));
 
+    // rectangle for drawing
+    sf::RectangleShape cell(sf::Vector2f(PIXELS_PER_CELL - 3, PIXELS_PER_CELL - 3));
+    cell.setOutlineThickness(1.0);
+
     // import the font
     sf::Font font;
     if (!font.loadFromFile("font/Pixel_NES.ttf")) {
@@ -249,12 +319,43 @@ int main(){
     }
     // ensure font is not blurry
     const_cast<sf::Texture&>(font.getTexture(FONT_SIZE)).setSmooth(false);
+    const_cast<sf::Texture&>(font.getTexture(2 * FONT_SIZE)).setSmooth(false);
 
+    // define the text
     sf::Text text;
     text.setFont(font);
-    text.setCharacterSize(FONT_SIZE);     // font size
-    text.setFillColor(font_color); // text color
-   
+    text.setCharacterSize(2 * FONT_SIZE);     // font size
+    text.setFillColor(font_color);            // text color
+
+    // import game over sound
+    sf::SoundBuffer sound_buffer;
+    bool sound_loaded_properly = sound_buffer.loadFromFile("game_over_sound.wav");
+    if(!sound_loaded_properly){
+        std::cerr << "Error loading audio file" << std::endl;
+        exit(1);
+    }
+    sf::Sound game_over_sound;
+    game_over_sound.setBuffer(sound_buffer);
+
+    // import the music
+    sf::Music main_music;
+    bool music_loaded_properly = main_music.openFromFile("main_music.wav");
+    if(!music_loaded_properly){
+        std::cerr << "Error loading audio file" << std::endl;
+        exit(1);
+    }
+    main_music.setLoop(true);
+
+    // import the music
+    sf::Music title_music;
+    music_loaded_properly = title_music.openFromFile("title_music.wav");
+    if(!music_loaded_properly){
+        std::cerr << "Error loading audio file" << std::endl;
+        exit(1);
+    }
+    title_music.setLoop(true);
+    title_music.play();
+
     // the random seed to generate the tetrominos
     srand(time(0));
 
@@ -262,13 +363,30 @@ int main(){
     sf::Event event;
 
     // current falling tetromino
-    int offset = rand() % 7;
-    Tetromino current_tetromino(get_random_shape(), offset);
+    char shape = get_random_shape();
+    int offset = get_offset(shape);
+    Tetromino current_tetromino(shape, offset);
     // next tetromino
-    Tetromino next_tetromino(get_random_shape(), 0);
+    shape = get_random_shape();
+    Tetromino next_tetromino(shape, 0);
     // preview tetromino
     Tetromino preview_tetromino(current_tetromino.get_shape(), offset);
     preview_tetromino.rush_down(matrix);
+
+    draw_welcome_page(text, window, cell);
+    while(1){
+        window.pollEvent(event);
+        if(event.type == sf::Event::KeyPressed){
+            if(event.key.code == sf::Keyboard::Key::Num1){
+                title_music.stop();
+                main_music.play();
+                break;
+            }
+        }else if(event.type == sf::Event::Closed){
+            window.close();
+            return 0;
+        } 
+    }
 
     // record the current time
     std::chrono::time_point<std::chrono::steady_clock> previous_time = std::chrono::steady_clock::now();
@@ -323,6 +441,22 @@ int main(){
                                     preview_tetromino.rush_down(matrix); 
                                     break;
                                 }
+                                case(sf::Keyboard::Escape):{
+                                    draw_pause_screen(window, text);
+
+                                    while(1){
+                                        window.pollEvent(event);
+                                        if(event.type == sf::Event::KeyPressed){
+                                            if(event.key.code == sf::Keyboard::Escape){
+                                                break;
+                                            }
+                                        }else if(event.type == sf::Event::Closed){
+                                            window.close();
+                                            return 0;
+                                        } 
+                                    }
+                                    previous_time = std::chrono::steady_clock::now();
+                                }
                             }    
                             break;
                         }else{
@@ -357,11 +491,9 @@ int main(){
             window.clear();
 
             // drawing operations
-            sf::RectangleShape cell(sf::Vector2f(PIXELS_PER_CELL - 3, PIXELS_PER_CELL - 3));
-            cell.setOutlineThickness(1.0);
 
             // draw the window with the gray background and the set tetrominos
-            draw_window_matrix(matrix, window, cell);
+            draw_matrix(matrix, window, cell, WINDOW_WIDTH, WINDOW_HEIGHT);
 
             // draw the current falling tetromino
             draw_current_tetromino(current_tetromino, window, cell);
@@ -409,10 +541,11 @@ int main(){
                     }
 
                     // update for next turn
-                    offset = rand() % 7;
+                    offset = get_offset(next_tetromino.get_shape());
                     current_tetromino = Tetromino(next_tetromino.get_shape(), offset);
                     preview_tetromino = Tetromino(current_tetromino.get_shape(), offset);
                     preview_tetromino.rush_down(matrix);
+
                     next_tetromino = Tetromino(get_random_shape(), 0);
                     score += calculate_points(cleared_lines, get_level(total_lines_cleared));
                     total_lines_cleared += cleared_lines;
@@ -420,8 +553,11 @@ int main(){
 
                     // if we can't reset, the game is over
                     if(current_tetromino.reset(next_tetromino.get_shape(), matrix) == 0){
+                        main_music.stop();
+                        game_over_sound.play();
                         save_highscore(score, highscore);
                         draw_game_over_screen(window, text, score, highscore);
+                        
                         // detect any key press
                         while(1){
                             window.pollEvent(event);
@@ -433,8 +569,6 @@ int main(){
                                 break;
                             }   
                         }
-                        
-                        
                     }
                 }
             }else{

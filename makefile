@@ -1,16 +1,20 @@
 all: sfml-app
 
 sfml-app: object.o
-	g++ object.o -o sfml-app -lsfml-graphics -lsfml-window -lsfml-system
+	g++ object.o -o sfml-app -lsfml-graphics -lsfml-window -lsfml-audio -lsfml-system
 
-object.o: main.o tetromino.o
-	ld -r main.o tetromino.o -o object.o
+object.o: main.o tetromino.o parameters.o
+	ld -r main.o tetromino.o -o object1.o
+	ld -r object1.o parameters.o -o object.o
 
 main.o: main.cpp
 	g++ -c main.cpp
 
 tetromino.o: tetromino.cpp
 	g++ -c tetromino.cpp
+
+parameters.o: parameters.cpp
+	g++ -c parameters.cpp
 
 clean:
 	rm -f *.o sfml-app
