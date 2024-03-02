@@ -8,10 +8,10 @@
 #include <iostream>
 #include <fstream>
 
-#include "parameters.hpp"      // window and cell dimensions definitions
-#include "colors.hpp"          // RGBA colors definitions
-#include "tetromino.hpp"       // blocks definitions
-#include "globals.hpp"
+#include "headers/parameters.hpp"      // window and cell dimensions definitions
+#include "headers/colors.hpp"          // RGBA colors definitions
+#include "headers/tetromino.hpp"       // blocks definitions
+#include "headers/globals.hpp"
 
 // generate an offset for each shape 
 int get_offset(char shape){
@@ -329,7 +329,7 @@ int main(){
 
     // import game over sound
     sf::SoundBuffer sound_buffer;
-    bool sound_loaded_properly = sound_buffer.loadFromFile("game_over_sound.wav");
+    bool sound_loaded_properly = sound_buffer.loadFromFile("audio/game_over_sound.wav");
     if(!sound_loaded_properly){
         std::cerr << "Error loading audio file" << std::endl;
         exit(1);
@@ -339,7 +339,7 @@ int main(){
 
     // import the music
     sf::Music main_music;
-    bool music_loaded_properly = main_music.openFromFile("main_music.wav");
+    bool music_loaded_properly = main_music.openFromFile("audio/main_music.wav");
     if(!music_loaded_properly){
         std::cerr << "Error loading audio file" << std::endl;
         exit(1);
@@ -348,7 +348,7 @@ int main(){
 
     // import the music
     sf::Music title_music;
-    music_loaded_properly = title_music.openFromFile("title_music.wav");
+    music_loaded_properly = title_music.openFromFile("audio/title_music.wav");
     if(!music_loaded_properly){
         std::cerr << "Error loading audio file" << std::endl;
         exit(1);

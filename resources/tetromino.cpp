@@ -1,9 +1,9 @@
 #ifndef TETROMINO_CPP
 #define TETROMINO_CPP
 
-#include "tetromino.hpp"
-#include "globals.hpp"
-#include "parameters.hpp"
+#include "../headers/tetromino.hpp"
+#include "../headers/globals.hpp"
+#include "../headers/parameters.hpp"
 #include <vector>
 #include <stdio.h>
 #include <iostream>

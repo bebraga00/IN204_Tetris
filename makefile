@@ -10,11 +10,11 @@ object.o: main.o tetromino.o parameters.o
 main.o: main.cpp
 	g++ -c main.cpp
 
-tetromino.o: tetromino.cpp
-	g++ -c tetromino.cpp
+tetromino.o: resources/tetromino.cpp
+	g++ -c resources/tetromino.cpp
 
-parameters.o: parameters.cpp
-	g++ -c parameters.cpp
+parameters.o: resources/parameters.cpp
+	g++ -c resources/parameters.cpp
 
 clean:
 	rm -f *.o sfml-app
