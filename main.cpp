@@ -12,8 +12,8 @@
 #include "colors.hpp"          // RGBA colors definitions
 #include "tetromino.hpp"       // blocks definitions
 #include "globals.hpp"
-// #include "parameters.cpp"
 
+// generate an offset for each shape 
 int get_offset(char shape){
         switch (shape){
     case 'I':
@@ -354,7 +354,6 @@ int main(){
         exit(1);
     }
     title_music.setLoop(true);
-    title_music.play();
 
     // the random seed to generate the tetrominos
     srand(time(0));
@@ -374,6 +373,7 @@ int main(){
     preview_tetromino.rush_down(matrix);
 
     draw_welcome_page(text, window, cell);
+    title_music.play();
     while(1){
         window.pollEvent(event);
         if(event.type == sf::Event::KeyPressed){
@@ -518,8 +518,9 @@ int main(){
                 fall_timer = 0;
                 if(not(current_tetromino.move_down(matrix))){
                     current_tetromino.update_matrix(matrix);
-                    // Count the lines cleared in this move
+                    // count and mark the lines cleared in this move
                     int cleared_lines = 0;
+                    bool lines_to_clear[] = {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false};
                     for(unsigned char row = 0; row < WINDOW_HEIGHT; row++){
                         bool clear_line = 1;
                         for(unsigned char col = 0; col < WINDOW_WIDTH; col++){
@@ -530,13 +531,37 @@ int main(){
                         }
                         if(clear_line == 1){
                             cleared_lines++;
-                            for(unsigned char col = 0; col < WINDOW_WIDTH; col++){
-                                matrix[col][row] = 0;
-                                for(unsigned char upwards_row = row; upwards_row > 0; upwards_row--){
-                                    matrix[col][upwards_row] = matrix[col][upwards_row - 1];
-                                    matrix[col][upwards_row - 1] = 0;
+                            lines_to_clear[row] = true;
+                        }
+                    }
+
+                    if(cleared_lines > 0){
+                        for(int i = 0; i < FADE_FRAMES; i++){
+                            for(unsigned char row = 0; row < WINDOW_HEIGHT; row++){
+                                if(lines_to_clear[row] == 1){
+                                    sf::Color fade_color(0,0,0,round((255 / FADE_FRAMES) * i));
+                                    cell.setFillColor(fade_color);
+                                    cell.setOutlineColor(fade_color);
+
+                                    for(unsigned char col = 0; col < WINDOW_WIDTH; col++){
+                                        cell.setPosition(col * PIXELS_PER_CELL, row * PIXELS_PER_CELL);
+                                        window.draw(cell);
+                                    }
                                 }
-                            }                        
+                                sleep(FRAME_DURATION / 1000000);
+                                window.display();
+                            }
+                        }
+                        for(unsigned char row = 0; row < WINDOW_HEIGHT; row++){
+                            if(lines_to_clear[row] == 1){
+                                for(unsigned char col = 0; col < WINDOW_WIDTH; col++){
+                                    matrix[col][row] = 0;
+                                    for(unsigned char upwards_row = row; upwards_row > 0; upwards_row--){
+                                        matrix[col][upwards_row] = matrix[col][upwards_row - 1];
+                                        matrix[col][upwards_row - 1] = 0;
+                                    }
+                                }                        
+                            }
                         }
                     }
 

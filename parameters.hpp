@@ -18,6 +18,7 @@ constexpr unsigned int VIEW_HEIGHT        = WINDOW_HEIGHT * PIXELS_PER_CELL;
 // timing constants
 constexpr unsigned int FRAME_DURATION     = 16667;  // frame duration in microseconds
 constexpr unsigned int START_FALL_SPEED   = 48;     // initial fall period in frames
+constexpr unsigned int FADE_FRAMES        = 10;     // how many frames to fade in a line clear
 
 // font size
 constexpr unsigned int FONT_SIZE          = 20;
