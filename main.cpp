@@ -8,10 +8,15 @@
 #include <iostream>
 #include <fstream>
 
+#include <sys/socket.h>
+#include <netinet/in.h>
+
 #include "headers/parameters.hpp"      // window and cell dimensions definitions
 #include "headers/colors.hpp"          // RGBA colors definitions
 #include "headers/tetromino.hpp"       // blocks definitions
 #include "headers/globals.hpp"
+#include "headers/server.hpp"
+#include "headers/client.hpp"
 
 // generate an offset for each shape 
 int get_offset(char shape){
@@ -280,6 +285,8 @@ void save_highscore(int score, int highscore){
 int main(){
     // guarantee we only move once per click
     bool already_moved = false;
+    bool is_server = false;
+    bool is_multiplayer = false;
 
     // timer for the falling tetromino
     unsigned char current_fall_speed = START_FALL_SPEED;
@@ -372,14 +379,55 @@ int main(){
     Tetromino preview_tetromino(current_tetromino.get_shape(), offset);
     preview_tetromino.rush_down(matrix);
 
+    // main menu
     draw_welcome_page(text, window, cell);
     title_music.play();
     while(1){
+        // options: singleplayer or multiplayer
         window.pollEvent(event);
         if(event.type == sf::Event::KeyPressed){
             if(event.key.code == sf::Keyboard::Key::Num1){
                 title_music.stop();
                 main_music.play();
+                break;
+            }else if(event.key.code == sf::Keyboard::Key::Num2){
+                // options: client or server
+                is_multiplayer = true;
+                window.clear();
+                draw_array(welcome_matrix, window, cell, VIEW_WIDTH, VIEW_HEIGHT);
+                text.setPosition((int(VIEW_WIDTH * 0.13)), int(VIEW_HEIGHT * 0.3));
+                text.setCharacterSize(2 * FONT_SIZE);
+                text.setString("MULTIPLAYER");
+                window.draw(text);
+                text.setPosition((int(VIEW_WIDTH * 0.35)), int(VIEW_HEIGHT * 0.5));
+                text.setString("1. SERVER");
+                text.setCharacterSize(FONT_SIZE);
+                window.draw(text);
+                text.setPosition((int(VIEW_WIDTH * 0.35)), int(VIEW_HEIGHT * 0.6));
+                text.setString("2. CLIENT");
+                window.draw(text);
+                window.display();
+                while(1){
+                    window.pollEvent(event);
+                    if(event.type == sf::Event::KeyPressed){
+                        if(event.key.code == sf::Keyboard::Key::Num1){
+                            // server
+                            is_server = true;
+                            title_music.stop();
+                            main_music.play();
+                            break;
+                        }else if(event.key.code == sf::Keyboard::Key::Num2){
+                            // client
+                            is_server = false;
+                            title_music.stop();
+                            main_music.play();
+                            break;
+                        }
+                    }else if(event.type == sf::Event::Closed){
+                        window.close();
+                        return 0;
+                    } 
+                }
                 break;
             }
         }else if(event.type == sf::Event::Closed){
@@ -391,215 +439,470 @@ int main(){
     // record the current time
     std::chrono::time_point<std::chrono::steady_clock> previous_time = std::chrono::steady_clock::now();
     unsigned int lag = 0;
+    
+    if(is_multiplayer){
+        // establish initial connection
+        if(is_server){
+            int port = 8080;
+            Server server(port);
+            server.start();
+        }else{
+            Client client("127.0.0.1", 8080);
+            if(!client.connectToServer()){
+                std::cout << "Cannot connect to server!";
+                return 1;
+            }
+            std::cout << "Connection established successfuly!";
+        }
 
-    while(window.isOpen()){
-        // record the time difference
-        unsigned delta_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - previous_time).count();
-        lag += delta_time;
-        previous_time += std::chrono::microseconds(delta_time);
+        std::vector<std::vector<unsigned char>> opponent_matrix(WINDOW_WIDTH, std::vector<unsigned char>(WINDOW_HEIGHT));
+        int opponent_score = 0;
+        int opponent_total_lines_cleared = 0;
 
-        // if we have surpassed the frame duration, we initiate our operations
-        while(lag >= FRAME_DURATION){
-            lag -= FRAME_DURATION;
+        int opponent_current_tetromino_x = 0;
+        int opponent_current_tetromino_y = 0;
+        char opponent_current_tetromino_shape = 'I';
+        char opponent_current_tetromino_rotation = 0;
 
-            while (window.pollEvent(event)){
-                switch(event.type){
-                    // close the window
-                    case (sf::Event::Closed):{
-                        save_highscore(score, highscore);
-                        window.close();
-                        break;
-                    }
-                    // guarantee we only move once when the key is pressed
-                    case sf::Event::KeyPressed:{
-                        if(not(already_moved)){
+        int opponent_next_tetromino_x = 0;
+        int opponent_next_tetromino_y = 0;
+        char opponent_next_tetromino_shape = 'T';
+        char opponent_next_tetromino_rotation = 0;
+
+        window.close();
+        sf::RenderWindow window_multiplayer(sf::VideoMode(round(1.5 * 2 * WINDOW_WIDTH * PIXELS_PER_CELL * WINDOW_RESIZE), WINDOW_HEIGHT * PIXELS_PER_CELL * WINDOW_RESIZE), "Tetris v1.2");
+        window_multiplayer.setView(sf::View(sf::FloatRect(0, 0, round(1.5 * VIEW_WIDTH), VIEW_HEIGHT)));    
+        
+        previous_time = std::chrono::steady_clock::now();
+
+        while(window_multiplayer.isOpen()){
+            if(1){
+                // send and receive the objects
+            }
+            // record the time difference
+            unsigned delta_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - previous_time).count();
+            lag += delta_time;
+            previous_time += std::chrono::microseconds(delta_time);
+
+            // if we have surpassed the frame duration, we initiate our operations
+            while(lag >= FRAME_DURATION){
+                lag -= FRAME_DURATION;
+
+                while (window_multiplayer.pollEvent(event)){
+                    switch(event.type){
+                        // close the window_multiplayer
+                        case (sf::Event::Closed):{
+                            save_highscore(score, highscore);
+                            window_multiplayer.close();
+                            break;
+                        }
+                        // guarantee we only move once when the key is pressed
+                        case sf::Event::KeyPressed:{
+                            if(not(already_moved)){
+                                switch(event.key.code){
+                                    case(sf::Keyboard::Right):{
+                                        already_moved = true;
+                                        current_tetromino.move_right(matrix);
+                                        preview_tetromino = current_tetromino;
+                                        preview_tetromino.rush_down(matrix); 
+                                        break;
+                                    }
+                                    case(sf::Keyboard::Left):{
+                                        already_moved = true;
+                                        current_tetromino.move_left(matrix);
+                                        preview_tetromino = current_tetromino;
+                                        preview_tetromino.rush_down(matrix); 
+                                        break;
+                                    }
+                                    case(sf::Keyboard::Down):{
+                                        already_moved = true;
+                                        fall_timer = current_fall_speed; // end the current round
+                                        current_tetromino.rush_down(matrix);    
+                                        break;
+                                    }
+                                    case(sf::Keyboard::Up):{
+                                        already_moved = true;
+                                        current_tetromino.rotate(matrix);
+                                        preview_tetromino = current_tetromino;
+                                        preview_tetromino.rush_down(matrix); 
+                                        break;
+                                    }
+                                    case(sf::Keyboard::Escape):{
+                                        draw_pause_screen(window_multiplayer, text);
+
+                                        while(1){
+                                            window_multiplayer.pollEvent(event);
+                                            if(event.type == sf::Event::KeyPressed){
+                                                if(event.key.code == sf::Keyboard::Escape){
+                                                    break;
+                                                }
+                                            }else if(event.type == sf::Event::Closed){
+                                                window_multiplayer.close();
+                                                return 0;
+                                            } 
+                                        }
+                                        previous_time = std::chrono::steady_clock::now();
+                                    }
+                                }    
+                                break;
+                            }else{
+                                break;
+                            }
+                        }
+                        // reset the movements 
+                        case sf::Event::KeyReleased:{
                             switch(event.key.code){
                                 case(sf::Keyboard::Right):{
-                                    already_moved = true;
-                                    current_tetromino.move_right(matrix);
-                                    preview_tetromino = current_tetromino;
-                                    preview_tetromino.rush_down(matrix); 
+                                    already_moved = false;
                                     break;
                                 }
                                 case(sf::Keyboard::Left):{
-                                    already_moved = true;
-                                    current_tetromino.move_left(matrix);
-                                    preview_tetromino = current_tetromino;
-                                    preview_tetromino.rush_down(matrix); 
+                                    already_moved = false;
                                     break;
                                 }
                                 case(sf::Keyboard::Down):{
-                                    already_moved = true;
-                                    fall_timer = current_fall_speed; // end the current round
-                                    current_tetromino.rush_down(matrix);    
+                                    already_moved = false;
                                     break;
                                 }
                                 case(sf::Keyboard::Up):{
-                                    already_moved = true;
-                                    current_tetromino.rotate(matrix);
-                                    preview_tetromino = current_tetromino;
-                                    preview_tetromino.rush_down(matrix); 
+                                    already_moved = false;
                                     break;
                                 }
-                                case(sf::Keyboard::Escape):{
-                                    draw_pause_screen(window, text);
-
-                                    while(1){
-                                        window.pollEvent(event);
-                                        if(event.type == sf::Event::KeyPressed){
-                                            if(event.key.code == sf::Keyboard::Escape){
-                                                break;
-                                            }
-                                        }else if(event.type == sf::Event::Closed){
-                                            window.close();
-                                            return 0;
-                                        } 
-                                    }
-                                    previous_time = std::chrono::steady_clock::now();
-                                }
-                            }    
-                            break;
-                        }else{
+                            }
                             break;
                         }
-                    }
-                    // reset the movements 
-                    case sf::Event::KeyReleased:{
-                        switch(event.key.code){
-                            case(sf::Keyboard::Right):{
-                                already_moved = false;
-                                break;
-                            }
-                            case(sf::Keyboard::Left):{
-                                already_moved = false;
-                                break;
-                            }
-                            case(sf::Keyboard::Down):{
-                                already_moved = false;
-                                break;
-                            }
-                            case(sf::Keyboard::Up):{
-                                already_moved = false;
-                                break;
-                            }
-                        }
-                        break;
                     }
                 }
-            }
 
-            window.clear();
+                window_multiplayer.clear();
 
-            // drawing operations
+                // drawing operations
 
-            // draw the window with the gray background and the set tetrominos
-            draw_matrix(matrix, window, cell, WINDOW_WIDTH, WINDOW_HEIGHT);
+                // draw the window_multiplayer with the gray background and the set tetrominos
+                draw_matrix(matrix, window_multiplayer, cell, WINDOW_WIDTH, WINDOW_HEIGHT);
 
-            // draw the current falling tetromino
-            draw_current_tetromino(current_tetromino, window, cell);
 
-            // draw the next tetromino
-            draw_next_tetromino(next_tetromino, window, cell);
+                // draw the current falling tetromino
+                draw_current_tetromino(current_tetromino, window_multiplayer, cell);
 
-            // draw the preview tetromino
-            draw_preview_tetromino(preview_tetromino, window, cell);
 
-            // draw the vertical line separating the board 
-            draw_vertical_line(window, cell);
+                // draw the next tetromino
+                draw_next_tetromino(next_tetromino, window_multiplayer, cell);
 
-            // display text
-            display_score(text, score, highscore, window);
-            display_level(text, get_level(total_lines_cleared), window);
-            display_next_shape_text(text, window);
 
-            window.display();
-            
-            if(fall_timer == current_fall_speed){
-                fall_timer = 0;
-                if(not(current_tetromino.move_down(matrix))){
-                    current_tetromino.update_matrix(matrix);
-                    // count and mark the lines cleared in this move
-                    int cleared_lines = 0;
-                    bool lines_to_clear[] = {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false};
-                    for(unsigned char row = 0; row < WINDOW_HEIGHT; row++){
-                        bool clear_line = 1;
-                        for(unsigned char col = 0; col < WINDOW_WIDTH; col++){
-                            if(matrix[col][row] == 0){
-                                clear_line = 0;
-                                break;
+                // draw the preview tetromino
+                draw_preview_tetromino(preview_tetromino, window_multiplayer, cell);
+
+                // draw the vertical line separating the board 
+                draw_vertical_line(window_multiplayer, cell);
+
+                // display text
+                display_score(text, score, highscore, window_multiplayer);
+                display_level(text, get_level(total_lines_cleared), window_multiplayer);
+                display_next_shape_text(text, window_multiplayer);
+
+                window_multiplayer.display();
+                
+                if(fall_timer == current_fall_speed){
+                    fall_timer = 0;
+                    if(not(current_tetromino.move_down(matrix))){
+                        current_tetromino.update_matrix(matrix);
+                        // count and mark the lines cleared in this move
+                        int cleared_lines = 0;
+                        bool lines_to_clear[] = {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false};
+                        for(unsigned char row = 0; row < WINDOW_HEIGHT; row++){
+                            bool clear_line = 1;
+                            for(unsigned char col = 0; col < WINDOW_WIDTH; col++){
+                                if(matrix[col][row] == 0){
+                                    clear_line = 0;
+                                    break;
+                                }
+                            }
+                            if(clear_line == 1){
+                                cleared_lines++;
+                                lines_to_clear[row] = true;
                             }
                         }
-                        if(clear_line == 1){
-                            cleared_lines++;
-                            lines_to_clear[row] = true;
-                        }
-                    }
 
-                    if(cleared_lines > 0){
-                        for(int i = 0; i < FADE_FRAMES; i++){
+                        if(cleared_lines > 0){
+                            for(int i = 0; i < FADE_FRAMES; i++){
+                                for(unsigned char row = 0; row < WINDOW_HEIGHT; row++){
+                                    if(lines_to_clear[row] == 1){
+                                        sf::Color fade_color(0,0,0,round((255 / FADE_FRAMES) * i));
+                                        cell.setFillColor(fade_color);
+                                        cell.setOutlineColor(fade_color);
+
+                                        for(unsigned char col = 0; col < WINDOW_WIDTH; col++){
+                                            cell.setPosition(col * PIXELS_PER_CELL, row * PIXELS_PER_CELL);
+                                            window_multiplayer.draw(cell);
+                                        }
+                                    }
+                                    sleep(FRAME_DURATION / 1000000);
+                                    window_multiplayer.display();
+                                }
+                            }
                             for(unsigned char row = 0; row < WINDOW_HEIGHT; row++){
                                 if(lines_to_clear[row] == 1){
-                                    sf::Color fade_color(0,0,0,round((255 / FADE_FRAMES) * i));
-                                    cell.setFillColor(fade_color);
-                                    cell.setOutlineColor(fade_color);
-
                                     for(unsigned char col = 0; col < WINDOW_WIDTH; col++){
-                                        cell.setPosition(col * PIXELS_PER_CELL, row * PIXELS_PER_CELL);
-                                        window.draw(cell);
-                                    }
+                                        matrix[col][row] = 0;
+                                        for(unsigned char upwards_row = row; upwards_row > 0; upwards_row--){
+                                            matrix[col][upwards_row] = matrix[col][upwards_row - 1];
+                                            matrix[col][upwards_row - 1] = 0;
+                                        }
+                                    }                        
                                 }
-                                sleep(FRAME_DURATION / 1000000);
-                                window.display();
                             }
                         }
-                        for(unsigned char row = 0; row < WINDOW_HEIGHT; row++){
-                            if(lines_to_clear[row] == 1){
-                                for(unsigned char col = 0; col < WINDOW_WIDTH; col++){
-                                    matrix[col][row] = 0;
-                                    for(unsigned char upwards_row = row; upwards_row > 0; upwards_row--){
-                                        matrix[col][upwards_row] = matrix[col][upwards_row - 1];
-                                        matrix[col][upwards_row - 1] = 0;
-                                    }
-                                }                        
+
+                        // update for next turn
+                        offset = get_offset(next_tetromino.get_shape());
+                        current_tetromino = Tetromino(next_tetromino.get_shape(), offset);
+                        preview_tetromino = Tetromino(current_tetromino.get_shape(), offset);
+                        preview_tetromino.rush_down(matrix);
+
+                        next_tetromino = Tetromino(get_random_shape(), 0);
+                        score += calculate_points(cleared_lines, get_level(total_lines_cleared));
+                        total_lines_cleared += cleared_lines;
+                        current_fall_speed = get_current_fall_speed(get_level(total_lines_cleared));
+
+                        // if we can't reset, the game is over
+                        if(current_tetromino.reset(next_tetromino.get_shape(), matrix) == 0){
+                            main_music.stop();
+                            game_over_sound.play();
+                            save_highscore(score, highscore);
+                            draw_game_over_screen(window_multiplayer, text, score, highscore);
+                            
+                            // detect any key press
+                            while(1){
+                                window_multiplayer.pollEvent(event);
+                                if(event.type == sf::Event::KeyPressed){
+                                    window_multiplayer.close();
+                                    break;
+                                }else if(event.type == sf::Event::Closed){
+                                    window_multiplayer.close();
+                                    break;
+                                }   
                             }
                         }
                     }
+                }else{
+                    fall_timer++;
+                }           
+            }
+        }
+    }
+    else{
+        while(window.isOpen()){
+            // record the time difference
+            unsigned delta_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - previous_time).count();
+            lag += delta_time;
+            previous_time += std::chrono::microseconds(delta_time);
 
-                    // update for next turn
-                    offset = get_offset(next_tetromino.get_shape());
-                    current_tetromino = Tetromino(next_tetromino.get_shape(), offset);
-                    preview_tetromino = Tetromino(current_tetromino.get_shape(), offset);
-                    preview_tetromino.rush_down(matrix);
+            // if we have surpassed the frame duration, we initiate our operations
+            while(lag >= FRAME_DURATION){
+                lag -= FRAME_DURATION;
 
-                    next_tetromino = Tetromino(get_random_shape(), 0);
-                    score += calculate_points(cleared_lines, get_level(total_lines_cleared));
-                    total_lines_cleared += cleared_lines;
-                    current_fall_speed = get_current_fall_speed(get_level(total_lines_cleared));
+                while (window.pollEvent(event)){
+                    switch(event.type){
+                        // close the window
+                        case (sf::Event::Closed):{
+                            save_highscore(score, highscore);
+                            window.close();
+                            break;
+                        }
+                        // guarantee we only move once when the key is pressed
+                        case sf::Event::KeyPressed:{
+                            if(not(already_moved)){
+                                switch(event.key.code){
+                                    case(sf::Keyboard::Right):{
+                                        already_moved = true;
+                                        current_tetromino.move_right(matrix);
+                                        preview_tetromino = current_tetromino;
+                                        preview_tetromino.rush_down(matrix); 
+                                        break;
+                                    }
+                                    case(sf::Keyboard::Left):{
+                                        already_moved = true;
+                                        current_tetromino.move_left(matrix);
+                                        preview_tetromino = current_tetromino;
+                                        preview_tetromino.rush_down(matrix); 
+                                        break;
+                                    }
+                                    case(sf::Keyboard::Down):{
+                                        already_moved = true;
+                                        fall_timer = current_fall_speed; // end the current round
+                                        current_tetromino.rush_down(matrix);    
+                                        break;
+                                    }
+                                    case(sf::Keyboard::Up):{
+                                        already_moved = true;
+                                        current_tetromino.rotate(matrix);
+                                        preview_tetromino = current_tetromino;
+                                        preview_tetromino.rush_down(matrix); 
+                                        break;
+                                    }
+                                    case(sf::Keyboard::Escape):{
+                                        draw_pause_screen(window, text);
 
-                    // if we can't reset, the game is over
-                    if(current_tetromino.reset(next_tetromino.get_shape(), matrix) == 0){
-                        main_music.stop();
-                        game_over_sound.play();
-                        save_highscore(score, highscore);
-                        draw_game_over_screen(window, text, score, highscore);
-                        
-                        // detect any key press
-                        while(1){
-                            window.pollEvent(event);
-                            if(event.type == sf::Event::KeyPressed){
-                                window.close();
+                                        while(1){
+                                            window.pollEvent(event);
+                                            if(event.type == sf::Event::KeyPressed){
+                                                if(event.key.code == sf::Keyboard::Escape){
+                                                    break;
+                                                }
+                                            }else if(event.type == sf::Event::Closed){
+                                                window.close();
+                                                return 0;
+                                            } 
+                                        }
+                                        previous_time = std::chrono::steady_clock::now();
+                                    }
+                                }    
                                 break;
-                            }else if(event.type == sf::Event::Closed){
-                                window.close();
+                            }else{
                                 break;
-                            }   
+                            }
+                        }
+                        // reset the movements 
+                        case sf::Event::KeyReleased:{
+                            switch(event.key.code){
+                                case(sf::Keyboard::Right):{
+                                    already_moved = false;
+                                    break;
+                                }
+                                case(sf::Keyboard::Left):{
+                                    already_moved = false;
+                                    break;
+                                }
+                                case(sf::Keyboard::Down):{
+                                    already_moved = false;
+                                    break;
+                                }
+                                case(sf::Keyboard::Up):{
+                                    already_moved = false;
+                                    break;
+                                }
+                            }
+                            break;
                         }
                     }
                 }
-            }else{
-                fall_timer++;
-            }           
+
+                window.clear();
+
+                // drawing operations
+
+                // draw the window with the gray background and the set tetrominos
+                draw_matrix(matrix, window, cell, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+                // draw the current falling tetromino
+                draw_current_tetromino(current_tetromino, window, cell);
+
+                // draw the next tetromino
+                draw_next_tetromino(next_tetromino, window, cell);
+
+                // draw the preview tetromino
+                draw_preview_tetromino(preview_tetromino, window, cell);
+
+                // draw the vertical line separating the board 
+                draw_vertical_line(window, cell);
+
+                // display text
+                display_score(text, score, highscore, window);
+                display_level(text, get_level(total_lines_cleared), window);
+                display_next_shape_text(text, window);
+
+                window.display();
+                
+                if(fall_timer == current_fall_speed){
+                    fall_timer = 0;
+                    if(not(current_tetromino.move_down(matrix))){
+                        current_tetromino.update_matrix(matrix);
+                        // count and mark the lines cleared in this move
+                        int cleared_lines = 0;
+                        bool lines_to_clear[] = {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false};
+                        for(unsigned char row = 0; row < WINDOW_HEIGHT; row++){
+                            bool clear_line = 1;
+                            for(unsigned char col = 0; col < WINDOW_WIDTH; col++){
+                                if(matrix[col][row] == 0){
+                                    clear_line = 0;
+                                    break;
+                                }
+                            }
+                            if(clear_line == 1){
+                                cleared_lines++;
+                                lines_to_clear[row] = true;
+                            }
+                        }
+
+                        if(cleared_lines > 0){
+                            for(int i = 0; i < FADE_FRAMES; i++){
+                                for(unsigned char row = 0; row < WINDOW_HEIGHT; row++){
+                                    if(lines_to_clear[row] == 1){
+                                        sf::Color fade_color(0,0,0,round((255 / FADE_FRAMES) * i));
+                                        cell.setFillColor(fade_color);
+                                        cell.setOutlineColor(fade_color);
+
+                                        for(unsigned char col = 0; col < WINDOW_WIDTH; col++){
+                                            cell.setPosition(col * PIXELS_PER_CELL, row * PIXELS_PER_CELL);
+                                            window.draw(cell);
+                                        }
+                                    }
+                                    sleep(FRAME_DURATION / 1000000);
+                                    window.display();
+                                }
+                            }
+                            for(unsigned char row = 0; row < WINDOW_HEIGHT; row++){
+                                if(lines_to_clear[row] == 1){
+                                    for(unsigned char col = 0; col < WINDOW_WIDTH; col++){
+                                        matrix[col][row] = 0;
+                                        for(unsigned char upwards_row = row; upwards_row > 0; upwards_row--){
+                                            matrix[col][upwards_row] = matrix[col][upwards_row - 1];
+                                            matrix[col][upwards_row - 1] = 0;
+                                        }
+                                    }                        
+                                }
+                            }
+                        }
+
+                        // update for next turn
+                        offset = get_offset(next_tetromino.get_shape());
+                        current_tetromino = Tetromino(next_tetromino.get_shape(), offset);
+                        preview_tetromino = Tetromino(current_tetromino.get_shape(), offset);
+                        preview_tetromino.rush_down(matrix);
+
+                        next_tetromino = Tetromino(get_random_shape(), 0);
+                        score += calculate_points(cleared_lines, get_level(total_lines_cleared));
+                        total_lines_cleared += cleared_lines;
+                        current_fall_speed = get_current_fall_speed(get_level(total_lines_cleared));
+
+                        // if we can't reset, the game is over
+                        if(current_tetromino.reset(next_tetromino.get_shape(), matrix) == 0){
+                            main_music.stop();
+                            game_over_sound.play();
+                            save_highscore(score, highscore);
+                            draw_game_over_screen(window, text, score, highscore);
+                            
+                            // detect any key press
+                            while(1){
+                                window.pollEvent(event);
+                                if(event.type == sf::Event::KeyPressed){
+                                    window.close();
+                                    break;
+                                }else if(event.type == sf::Event::Closed){
+                                    window.close();
+                                    break;
+                                }   
+                            }
+                        }
+                    }
+                }else{
+                    fall_timer++;
+                }           
+            }
         }
     }
+
     return 0;
 }
+

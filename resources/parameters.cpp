@@ -1,7 +1,0 @@
-#ifndef PARAMETERS_CPP
-#define PARAMETERS_CPP
-
-#include<vector>
-#include"../headers/parameters.hpp"
-
-#endif

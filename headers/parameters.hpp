@@ -28,7 +28,7 @@ constexpr unsigned char LEVEL_SPEEDS[]    = {48,43,38,33,28,23,18,13,8,6,5,5,5,4
 
 // home screen welcome page design                                                                     TOP LEFT                                                                                         BOTTOM LEFT
 constexpr unsigned char welcome_matrix[VIEW_WIDTH / PIXELS_PER_CELL][VIEW_HEIGHT / PIXELS_PER_CELL] =  {{  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,'I','I','I','I','T'}, 
-                                                                                                        {  0,  0,  0,'I','I','I','I',  0,  0,  0,  0,  0,  0,  0,'Z','Z','L','L','T','T'}, 
+                                                                                                        {  0,  0,'I','I','I','I',  0,  0,  0,  0,  0,  0,  0,  0,'Z','Z','L','L','T','T'}, 
                                                                                                         {  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,'Z','Z','L','S','T'}, 
                                                                                                         {  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,'L','S','S'}, 
                                                                                                         {  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,'O','O','S'}, 
