@@ -12,7 +12,8 @@ constexpr unsigned int PIXELS_PER_CELL    = 20;     // how many pixels in one te
 constexpr unsigned int WINDOW_RESIZE      = 2;      // window resize value
 
 // view dimensions
-constexpr unsigned int VIEW_WIDTH         = 2 * PIXELS_PER_CELL * (WINDOW_WIDTH + 0.5);
+constexpr unsigned int VIEW_WIDTH         = 2 * PIXELS_PER_CELL * WINDOW_WIDTH + 1 * PIXELS_PER_CELL;
+constexpr unsigned int VIEW_WIDTH_MULT    = 3 * PIXELS_PER_CELL * WINDOW_WIDTH + 2 * PIXELS_PER_CELL;
 constexpr unsigned int VIEW_HEIGHT        = WINDOW_HEIGHT * PIXELS_PER_CELL;
 
 // timing constants

@@ -128,7 +128,7 @@ unsigned char get_current_fall_speed(int level){
     }
 }
 
-void draw_matrix(std::vector<std::vector<unsigned char>>& matrix, sf::RenderWindow& window, sf::RectangleShape& cell, int width, int height){
+void draw_matrix(std::vector<std::vector<unsigned char>>& matrix, sf::RenderWindow& window, sf::RectangleShape& cell, int width, int height, int offset){
     for(int i = 0; i < width; i++){
         for(int j = 0; j < height; j++){
             if(matrix[i][j] == 0){
@@ -138,7 +138,7 @@ void draw_matrix(std::vector<std::vector<unsigned char>>& matrix, sf::RenderWind
                 cell.setFillColor(get_shape_color(matrix[i][j]));
                 cell.setOutlineColor(get_border_color(matrix[i][j]));
             }
-            cell.setPosition(PIXELS_PER_CELL * i, PIXELS_PER_CELL * j);
+            cell.setPosition(PIXELS_PER_CELL * (i + offset), PIXELS_PER_CELL * j);
             window.draw(cell);
         }
     }
@@ -202,11 +202,11 @@ void draw_preview_tetromino(Tetromino& preview_tetromino, sf::RenderWindow& wind
     }
 }
 
-void draw_vertical_line(sf::RenderWindow& window, sf::RectangleShape& cell){
+void draw_vertical_line(sf::RenderWindow& window, sf::RectangleShape& cell, int offset){
     cell.setFillColor(line);
     cell.setOutlineColor(line_border);
     for(int i = 0; i < WINDOW_HEIGHT; i++){
-        cell.setPosition(WINDOW_WIDTH * PIXELS_PER_CELL, PIXELS_PER_CELL * i);
+        cell.setPosition(offset * PIXELS_PER_CELL, PIXELS_PER_CELL * i);
         window.draw(cell);
     }
 }
@@ -232,10 +232,10 @@ void draw_black_override_backgroud(sf::RenderWindow& window){
     }
 }
 
-void draw_pause_screen(sf::RenderWindow& window, sf::Text& text){
+void draw_pause_screen(sf::RenderWindow& window, sf::Text& text, int current_view_width){
     draw_black_override_backgroud(window);
 
-    text.setPosition((int(VIEW_WIDTH * 0.4)), int(VIEW_HEIGHT * 0.5));
+    text.setPosition(int((current_view_width - 4 * PIXELS_PER_CELL) / 2), int(VIEW_HEIGHT * 0.5));
     text.setString("PAUSE");
     window.draw(text);
     window.display();
@@ -442,43 +442,44 @@ int main(){
     
     if(is_multiplayer){
         // establish initial connection
-        if(is_server){
-            int port = 8080;
-            Server server(port);
-            server.start();
-        }else{
-            Client client("127.0.0.1", 8080);
-            if(!client.connectToServer()){
-                std::cout << "Cannot connect to server!";
-                return 1;
-            }
-            std::cout << "Connection established successfuly!";
-        }
+        // if(is_server){
+        //     int port = 8080;
+        //     Server server(port);
+        //     server.start();
+        // }else{
+        //     Client client("127.0.0.1", 8080);
+        //     if(!client.connectToServer()){
+        //         std::cout << "Cannot connect to server!";
+        //         return 1;
+        //     }
+        //     std::cout << "Connection established successfuly!";
+        // }
 
-        std::vector<std::vector<unsigned char>> opponent_matrix(WINDOW_WIDTH, std::vector<unsigned char>(WINDOW_HEIGHT));
         int opponent_score = 0;
         int opponent_total_lines_cleared = 0;
 
-        int opponent_current_tetromino_x = 0;
-        int opponent_current_tetromino_y = 0;
-        char opponent_current_tetromino_shape = 'I';
-        char opponent_current_tetromino_rotation = 0;
+        int opponent_tetromino_x[] = {0, 1, 2, 3};
+        int opponent_tetromino_y[] = {0, 0, 0, 0};
+        char opponent_tetromino_shape = 'I';
 
-        int opponent_next_tetromino_x = 0;
-        int opponent_next_tetromino_y = 0;
-        char opponent_next_tetromino_shape = 'T';
-        char opponent_next_tetromino_rotation = 0;
+        std::vector<std::vector<unsigned char>> opponent_matrix(WINDOW_WIDTH, std::vector<unsigned char>(WINDOW_HEIGHT));
 
         window.close();
         sf::RenderWindow window_multiplayer(sf::VideoMode(round(1.5 * 2 * WINDOW_WIDTH * PIXELS_PER_CELL * WINDOW_RESIZE), WINDOW_HEIGHT * PIXELS_PER_CELL * WINDOW_RESIZE), "Tetris v1.2");
-        window_multiplayer.setView(sf::View(sf::FloatRect(0, 0, round(1.5 * VIEW_WIDTH), VIEW_HEIGHT)));    
+        window_multiplayer.setView(sf::View(sf::FloatRect(0, 0, VIEW_WIDTH_MULT, VIEW_HEIGHT)));    
         
         previous_time = std::chrono::steady_clock::now();
 
         while(window_multiplayer.isOpen()){
             if(1){
-                // send and receive the objects
+                int opponent_score = 0;
+                int opponent_total_lines_cleared = 0;
+
+                int opponent_tetromino_x[] = {0, 1, 2, 3};
+                int opponent_tetromino_y[] = {0, 0, 0, 0};
+                char opponent_tetromino_shape = 'I';
             }
+
             // record the time difference
             unsigned delta_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - previous_time).count();
             lag += delta_time;
@@ -527,22 +528,23 @@ int main(){
                                         preview_tetromino.rush_down(matrix); 
                                         break;
                                     }
-                                    case(sf::Keyboard::Escape):{
-                                        draw_pause_screen(window_multiplayer, text);
+                                    // pause is not possible in multiplayer mode
+                                    // case(sf::Keyboard::Escape):{
+                                    //     draw_pause_screen(window_multiplayer, text, VIEW_WIDTH_MULT);
 
-                                        while(1){
-                                            window_multiplayer.pollEvent(event);
-                                            if(event.type == sf::Event::KeyPressed){
-                                                if(event.key.code == sf::Keyboard::Escape){
-                                                    break;
-                                                }
-                                            }else if(event.type == sf::Event::Closed){
-                                                window_multiplayer.close();
-                                                return 0;
-                                            } 
-                                        }
-                                        previous_time = std::chrono::steady_clock::now();
-                                    }
+                                    //     while(1){
+                                    //         window_multiplayer.pollEvent(event);
+                                    //         if(event.type == sf::Event::KeyPressed){
+                                    //             if(event.key.code == sf::Keyboard::Escape){
+                                    //                 break;
+                                    //             }
+                                    //         }else if(event.type == sf::Event::Closed){
+                                    //             window_multiplayer.close();
+                                    //             return 0;
+                                    //         } 
+                                    //     }
+                                    //     previous_time = std::chrono::steady_clock::now();
+                                    // }
                                 }    
                                 break;
                             }else{
@@ -579,22 +581,27 @@ int main(){
                 // drawing operations
 
                 // draw the window_multiplayer with the gray background and the set tetrominos
-                draw_matrix(matrix, window_multiplayer, cell, WINDOW_WIDTH, WINDOW_HEIGHT);
-
+                draw_matrix(matrix, window_multiplayer, cell, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
+                draw_matrix(opponent_matrix, window_multiplayer, cell, WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_WIDTH * 2 + 2);
 
                 // draw the current falling tetromino
                 draw_current_tetromino(current_tetromino, window_multiplayer, cell);
-
+                cell.setFillColor(get_shape_color(opponent_tetromino_shape));
+                cell.setOutlineColor(get_border_color(opponent_tetromino_shape));
+                for(int i = 0; i < 4; i++){
+                    cell.setPosition(opponent_tetromino_x[i] * PIXELS_PER_CELL + (2 * WINDOW_WIDTH + 2) * PIXELS_PER_CELL, opponent_tetromino_y[i] * PIXELS_PER_CELL);
+                    window_multiplayer.draw(cell);
+                }
 
                 // draw the next tetromino
                 draw_next_tetromino(next_tetromino, window_multiplayer, cell);
-
 
                 // draw the preview tetromino
                 draw_preview_tetromino(preview_tetromino, window_multiplayer, cell);
 
                 // draw the vertical line separating the board 
-                draw_vertical_line(window_multiplayer, cell);
+                draw_vertical_line(window_multiplayer, cell, WINDOW_WIDTH);
+                draw_vertical_line(window_multiplayer, cell, 2 * WINDOW_WIDTH + 1);
 
                 // display text
                 display_score(text, score, highscore, window_multiplayer);
@@ -742,7 +749,7 @@ int main(){
                                         break;
                                     }
                                     case(sf::Keyboard::Escape):{
-                                        draw_pause_screen(window, text);
+                                        draw_pause_screen(window, text, VIEW_WIDTH);
 
                                         while(1){
                                             window.pollEvent(event);
@@ -793,7 +800,7 @@ int main(){
                 // drawing operations
 
                 // draw the window with the gray background and the set tetrominos
-                draw_matrix(matrix, window, cell, WINDOW_WIDTH, WINDOW_HEIGHT);
+                draw_matrix(matrix, window, cell, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
 
                 // draw the current falling tetromino
                 draw_current_tetromino(current_tetromino, window, cell);
@@ -805,7 +812,7 @@ int main(){
                 draw_preview_tetromino(preview_tetromino, window, cell);
 
                 // draw the vertical line separating the board 
-                draw_vertical_line(window, cell);
+                draw_vertical_line(window, cell, WINDOW_WIDTH);
 
                 // display text
                 display_score(text, score, highscore, window);
