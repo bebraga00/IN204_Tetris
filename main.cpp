@@ -507,13 +507,16 @@ int main(){
                     std::cerr << "Error: Read failed\n";
                     return 1;
                 }
-                std::cout << "Message from client: ";
-                for(int i = 0; i < 5; i++){
-                    std::cout << buffer[i];
-                }
-                std::cout << "\n";
 
-                int opponent_score = buffer[0];
+                std::string aux_string = "";
+                for(int i = 0; i < offsets[1]; i++){
+                    aux_string.push_back(buffer[i] + offsets[0]);
+                }
+                opponent_score = stoi(aux_string);
+
+                // std::cout << opponent_score << "\n";
+
+
                 int opponent_total_lines_cleared = buffer[1];
 
                 int opponent_tetromino_x[] = {0, 1, 2, 3};
@@ -670,9 +673,16 @@ int main(){
                 draw_vertical_line(window_multiplayer, cell, WINDOW_WIDTH);
                 draw_vertical_line(window_multiplayer, cell, 2 * WINDOW_WIDTH + 1);
 
-                // display text
-                display_score(text, score, highscore, window_multiplayer);
-                display_level(text, get_level(total_lines_cleared), window_multiplayer);
+                // // display text
+                // display_score(text, score, highscore, window_multiplayer);
+                // display_level(text, get_level(total_lines_cleared), window_multiplayer);
+
+                text.setPosition(((int(WINDOW_WIDTH * 1.2)) * PIXELS_PER_CELL), ((int(WINDOW_WIDTH * 0.1)) * PIXELS_PER_CELL)); // POSITION
+                std::string scoreString = std::to_string(score);
+                std::string opponentScoreString = std::to_string(opponent_score);    
+                text.setString("P1 SCORE\n" + std::string(6 - scoreString.length(), '0') + scoreString + "\nP2 SCORE\n" + std::string(6 - opponentScoreString.length(), '0') + opponentScoreString);
+                window_multiplayer.draw(text);
+
                 display_next_shape_text(text, window_multiplayer);
 
                 window_multiplayer.display();
