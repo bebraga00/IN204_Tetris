@@ -1,5 +1,5 @@
 #include <SFML/Graphics.hpp>
-#include <SFML/Audio.hpp>
+// #include <SFML/Audio.hpp>
 #include <random>
 #include <time.h>
 #include <unistd.h>
@@ -335,32 +335,32 @@ int main(){
     text.setFillColor(font_color);            // text color
 
     // import game over sound
-    sf::SoundBuffer sound_buffer;
-    bool sound_loaded_properly = sound_buffer.loadFromFile("audio/game_over_sound.wav");
-    if(!sound_loaded_properly){
-        std::cerr << "Error loading audio file" << std::endl;
-        exit(1);
-    }
-    sf::Sound game_over_sound;
-    game_over_sound.setBuffer(sound_buffer);
+    // sf::SoundBuffer sound_buffer;
+    // bool sound_loaded_properly = sound_buffer.loadFromFile("audio/game_over_sound.wav");
+    // if(!sound_loaded_properly){
+    //     std::cerr << "Error loading audio file" << std::endl;
+    //     exit(1);
+    // }
+    // sf::Sound game_over_sound;
+    // game_over_sound.setBuffer(sound_buffer);
 
     // import the music
-    sf::Music main_music;
-    bool music_loaded_properly = main_music.openFromFile("audio/main_music.wav");
-    if(!music_loaded_properly){
-        std::cerr << "Error loading audio file" << std::endl;
-        exit(1);
-    }
-    main_music.setLoop(true);
+    // sf::Music main_music;
+    // bool music_loaded_properly = main_music.openFromFile("audio/main_music.wav");
+    // if(!music_loaded_properly){
+    //     std::cerr << "Error loading audio file" << std::endl;
+    //     exit(1);
+    // }
+    // main_music.setLoop(true);
 
     // import the music
-    sf::Music title_music;
-    music_loaded_properly = title_music.openFromFile("audio/title_music.wav");
-    if(!music_loaded_properly){
-        std::cerr << "Error loading audio file" << std::endl;
-        exit(1);
-    }
-    title_music.setLoop(true);
+    // sf::Music title_music;
+    // music_loaded_properly = title_music.openFromFile("audio/title_music.wav");
+    // if(!music_loaded_properly){
+    //     std::cerr << "Error loading audio file" << std::endl;
+    //     exit(1);
+    // }
+    // title_music.setLoop(true);
 
     // the random seed to generate the tetrominos
     srand(time(0));
@@ -381,15 +381,17 @@ int main(){
 
     // main menu
     draw_welcome_page(text, window, cell);
-    title_music.play();
+    // title_music.play();
     while(1){
         // options: singleplayer or multiplayer
         window.pollEvent(event);
         if(event.type == sf::Event::KeyPressed){
+            // singleplayer
             if(event.key.code == sf::Keyboard::Key::Num1){
-                title_music.stop();
-                main_music.play();
+                // title_music.stop();
+                // main_music.play();
                 break;
+            // multiplayer
             }else if(event.key.code == sf::Keyboard::Key::Num2){
                 // options: client or server
                 is_multiplayer = true;
@@ -413,14 +415,10 @@ int main(){
                         if(event.key.code == sf::Keyboard::Key::Num1){
                             // server
                             is_server = true;
-                            title_music.stop();
-                            main_music.play();
                             break;
                         }else if(event.key.code == sf::Keyboard::Key::Num2){
                             // client
                             is_server = false;
-                            title_music.stop();
-                            main_music.play();
                             break;
                         }
                     }else if(event.type == sf::Event::Closed){
@@ -430,6 +428,7 @@ int main(){
                 }
                 break;
             }
+        // close window
         }else if(event.type == sf::Event::Closed){
             window.close();
             return 0;
@@ -441,20 +440,45 @@ int main(){
     unsigned int lag = 0;
     
     if(is_multiplayer){
-        // establish initial connection
-        // if(is_server){
-        //     int port = 8080;
-        //     Server server(port);
-        //     server.start();
-        // }else{
-        //     Client client("127.0.0.1", 8080);
-        //     if(!client.connectToServer()){
-        //         std::cout << "Cannot connect to server!";
-        //         return 1;
-        //     }
-        //     std::cout << "Connection established successfuly!";
-        // }
+        int port = 8080;
+        Server server(port);
+        Client client("127.0.0.1", 8080);
 
+        // establish initial connection
+        if(is_server){
+            // draw the screen
+            window.clear();
+            draw_array(welcome_matrix, window, cell, VIEW_WIDTH, VIEW_HEIGHT);
+            text.setPosition((int(VIEW_WIDTH * 0.13)), int(VIEW_HEIGHT * 0.3));
+            text.setCharacterSize(2 * FONT_SIZE);
+            text.setString("MULTIPLAYER");
+            window.draw(text);
+            text.setPosition((int(VIEW_WIDTH * 0.4)), int(VIEW_HEIGHT * 0.5));
+            text.setString("SERVER");
+            text.setCharacterSize(FONT_SIZE);
+            window.draw(text);
+            text.setPosition((int(VIEW_WIDTH * 0.15)), int(VIEW_HEIGHT * 0.6));
+            text.setString("AWAITING CONNECTION...");
+            window.draw(text);
+            window.display();
+
+            // create ports and await connection
+            server.start();
+            window.clear();
+            // title_music.stop();
+            // main_music.play();
+        }else{
+            if(!client.connectToServer()){
+                std::cout << "Cannot connect to server!";
+                return 1;
+            }
+            std::cout << "Connection established successfuly!";
+            // title_music.stop();
+            // main_music.play();
+        }
+        char buffer[256] = {0};
+
+        // initialize opponents variables
         int opponent_score = 0;
         int opponent_total_lines_cleared = 0;
 
@@ -464,20 +488,63 @@ int main(){
 
         std::vector<std::vector<unsigned char>> opponent_matrix(WINDOW_WIDTH, std::vector<unsigned char>(WINDOW_HEIGHT));
 
+        // setup the new multiplayer window, which is larger
         window.close();
-        sf::RenderWindow window_multiplayer(sf::VideoMode(round(1.5 * 2 * WINDOW_WIDTH * PIXELS_PER_CELL * WINDOW_RESIZE), WINDOW_HEIGHT * PIXELS_PER_CELL * WINDOW_RESIZE), "Tetris v1.2");
+        std::string window_name;
+        if(is_server){
+            window_name = "Multiplayer Tetris - Server";
+        }else{
+            window_name = "Multiplayer Tetris - Client";
+        }
+        sf::RenderWindow window_multiplayer(sf::VideoMode(round(1.5 * 2 * WINDOW_WIDTH * PIXELS_PER_CELL * WINDOW_RESIZE), WINDOW_HEIGHT * PIXELS_PER_CELL * WINDOW_RESIZE), window_name);
         window_multiplayer.setView(sf::View(sf::FloatRect(0, 0, VIEW_WIDTH_MULT, VIEW_HEIGHT)));    
         
         previous_time = std::chrono::steady_clock::now();
 
         while(window_multiplayer.isOpen()){
-            if(1){
-                int opponent_score = 0;
-                int opponent_total_lines_cleared = 0;
+            if(is_server){
+                if(read(server.get_clientSocket(), buffer, sizeof(buffer)) == -1){
+                    std::cerr << "Error: Read failed\n";
+                    return 1;
+                }
+                std::cout << "Message from client: ";
+                for(int i = 0; i < 5; i++){
+                    std::cout << buffer[i];
+                }
+                std::cout << "\n";
+
+                int opponent_score = buffer[0];
+                int opponent_total_lines_cleared = buffer[1];
 
                 int opponent_tetromino_x[] = {0, 1, 2, 3};
                 int opponent_tetromino_y[] = {0, 0, 0, 0};
                 char opponent_tetromino_shape = 'I';
+            }else{
+                // characters 0-4: score with zero padding
+                int num_digits = 0;
+                int temp = score;
+
+                while(temp != 0){
+                    temp /= 10;
+                    num_digits++;
+                }
+                for(int i = 0; i < offsets[1]; i++){
+                    buffer[i + offsets[0]] = '0';
+                }
+
+                temp = score;
+                for (int i = offsets[1] - 1; i >= offsets[1] - 1 - num_digits + 1; i--) {
+                    buffer[i + offsets[0]] = std::to_string(temp % 10)[0];
+                    temp /= 10;
+                }
+
+                if(client.sendMessage(buffer)){
+                    std::cout << "Message to server: ";
+                    for(int i = 0; i < 5; i++){
+                        std::cout << buffer[i];
+                    }
+                    std::cout << "\n";
+                }
             }
 
             // record the time difference
@@ -674,8 +741,8 @@ int main(){
 
                         // if we can't reset, the game is over
                         if(current_tetromino.reset(next_tetromino.get_shape(), matrix) == 0){
-                            main_music.stop();
-                            game_over_sound.play();
+                            // main_music.stop();
+                            // game_over_sound.play();
                             save_highscore(score, highscore);
                             draw_game_over_screen(window_multiplayer, text, score, highscore);
                             
@@ -885,8 +952,8 @@ int main(){
 
                         // if we can't reset, the game is over
                         if(current_tetromino.reset(next_tetromino.get_shape(), matrix) == 0){
-                            main_music.stop();
-                            game_over_sound.play();
+                            // main_music.stop();
+                            // game_over_sound.play();
                             save_highscore(score, highscore);
                             draw_game_over_screen(window, text, score, highscore);
                             

@@ -17,6 +17,7 @@ public:
     ~Server();
     void start();
     void handleClient();
+    int get_clientSocket();
 };
 
 #endif

@@ -77,11 +77,8 @@ void Server::handleClient() {
     }
 }
 
-// int main() {
-//     int port = 8080;
-//     Server server(port);
-//     server.start();
-//     return 0;
-// }
+int Server::get_clientSocket(){
+    return this->clientSocket;
+}
 
 #endif
