@@ -24,6 +24,9 @@ class Tetromino{
         void move_right(const std::vector<std::vector<unsigned char>>& game_matrix);
         void rush_down(const std::vector<std::vector<unsigned char>>& game_matrix);
         void rotate(const std::vector<std::vector<unsigned char>>& game_matrix);
+
+        void get_positions_x(char* array);
+        void get_positions_y(char* array);
         
         //reset functio,
         bool reset(char shape, const std::vector<std::vector<unsigned char>>& game_matrix);

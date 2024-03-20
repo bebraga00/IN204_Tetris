@@ -8,6 +8,8 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
+#include"../headers/parameters.hpp"
+
 class Client {
 private:
     int sockfd;

@@ -50,8 +50,7 @@ constexpr unsigned char welcome_matrix[VIEW_WIDTH / PIXELS_PER_CELL][VIEW_HEIGHT
                                                                                                         {  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,'T',  0,  0,  0,  0,'S','S','O','O','J'}, 
                                                                                                         {  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,'S','S',  0,'O','O',  0}};
 //                                                                                                    TOP RIGHT                                                                                         BOTTOM RIGHT
-constexpr unsigned char offsets[]          = {0,6};
-
-
+constexpr unsigned char offsets[]          = {0,6,7,11,15};
+constexpr unsigned int  LEN_BUFFER         = 256;
 
 #endif

@@ -39,7 +39,7 @@ bool Client::connectToServer() {
 
 bool Client::sendMessage(const char* message) {
     // Send message to server
-    if (send(sockfd, message, strlen(message), 0) == -1) {
+    if (send(sockfd, message, LEN_BUFFER, 0) == -1) {
         std::cerr << "Error sending message" << std::endl;
         return false;
     }

@@ -254,4 +254,18 @@ void Tetromino::update_matrix(std::vector<std::vector<unsigned char>>& game_matr
     }
 }
 
+void Tetromino::get_positions_x(char* array){
+    array[0] = this->tetromino_matrix[0].x;
+    array[1] = this->tetromino_matrix[1].x;
+    array[2] = this->tetromino_matrix[2].x;
+    array[3] = this->tetromino_matrix[3].x;
+}
+
+void Tetromino::get_positions_y(char* array){
+    array[0] = this->tetromino_matrix[0].y;
+    array[1] = this->tetromino_matrix[1].y;
+    array[2] = this->tetromino_matrix[2].y;
+    array[3] = this->tetromino_matrix[3].y;
+}
+
 #endif
