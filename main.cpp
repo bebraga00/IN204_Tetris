@@ -442,9 +442,8 @@ int main(){
     if(is_multiplayer){
         int port = 8080;
         Server server(port);
-        // Client client("127.0.0.1", port);
         Client client("127.0.0.1", port);
-        
+        // Client client("192.168.156.237", port);        
 
         // establish initial connection
         if(is_server){
@@ -470,10 +469,12 @@ int main(){
             // title_music.stop();
             // main_music.play();
         }//else{
+        else{
             if(!client.connectToServer()){
                 std::cout << "Cannot connect to server!";
                 return 1;
             }
+        }
             // std::cout << "Connection established successfuly!";
             // title_music.stop();
             // main_music.play();
@@ -610,17 +611,10 @@ int main(){
                         std::cout << "\n";
                     }
                     // receive message
-                    std::cout << "antes" << "\n";
-                    // client.receiveResponse(buffer, LEN_BUFFER);
                     if(read(client.get_sockfd(), buffer, sizeof(buffer)) == -1){
                         std::cerr << "Error: Read failed\n";
                         return 1;
                     }
-                    std::cout << "depois" << "\n";
-                    // if(read(server.get_clientSocket(), buffer, sizeof(buffer)) == -1){
-                    //     std::cerr << "Error: Read failed\n";
-                    //     return 1;
-                    // }
                     // decode the variables in the buffer
                     opponent_score = (buffer[0] - '0') * 100000 + (buffer[1] - '0') * 100000 + (buffer[2] - '0') * 1000 + (buffer[3] - '0') * 100 + (buffer[4] - '0') * 10 + (buffer[5] - '0') * 1;
                     opponent_tetromino_shape = buffer[offsets[1]];
@@ -755,7 +749,7 @@ int main(){
 
                 // // display text
                 // display_score(text, score, highscore, window_multiplayer);
-                // display_level(text, get_level(total_lines_cleared), window_multiplayer);
+                display_level(text, get_level(total_lines_cleared), window_multiplayer);
 
                 text.setPosition(((int(WINDOW_WIDTH * 1.2)) * PIXELS_PER_CELL), ((int(WINDOW_WIDTH * 0.1)) * PIXELS_PER_CELL)); // POSITION
                 std::string scoreString = std::to_string(score);
