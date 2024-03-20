@@ -477,6 +477,7 @@ int main(){
             // main_music.play();
         }
         char buffer[256] = {0};
+        char send[256] = {0};
 
         // initialize opponents variables
         int opponent_score = 0;
@@ -517,22 +518,8 @@ int main(){
                         std::cerr << "Error: Read failed\n";
                         return 1;
                     }
-
-                    // std::string aux_string = "";
-                    // for(int i = 0; i < offsets[1]; i++){
-                    //     aux_string.push_back(buffer[i] + offsets[0]);
-                    // }
-
+                    // receive each variable in the 
                     opponent_score = (buffer[0] - '0') * 100000 + (buffer[1] - '0') * 100000 + (buffer[2] - '0') * 1000 + (buffer[3] - '0') * 100 + (buffer[4] - '0') * 10 + (buffer[5] - '0') * 1;
-
-                    // try{
-                    //     opponent_score = std::stoi(aux_string + "0");
-                    // }
-                    // catch (const std::invalid_argument& e) {
-                    //     std::cerr << "Invalid argument: " << e.what() << std::endl;
-                    //     std::cout << aux_string << std::endl;
-                    // }
-
                     opponent_tetromino_shape = buffer[offsets[1]];
                     opponent_tetromino_x[0] = buffer[offsets[2] + 0];
                     opponent_tetromino_x[1] = buffer[offsets[2] + 1];
@@ -542,23 +529,17 @@ int main(){
                     opponent_tetromino_y[1] = buffer[offsets[3] + 1];
                     opponent_tetromino_y[2] = buffer[offsets[3] + 2];
                     opponent_tetromino_y[3] = buffer[offsets[3] + 3];
-
                     for(int i = 0; i < WINDOW_HEIGHT *  WINDOW_WIDTH; i++){
                         opponent_matrix[i % WINDOW_WIDTH][int(i / WINDOW_WIDTH)] = buffer[i + offsets[4]];
                     }
 
                     std::cout << "Message received: ";
-                    for(int i = 0; i <= offsets[4]; i++){
+                    for(int i = 0; i < offsets[5]; i++){
                         std::cout << buffer[i];
                     }
                     std::cout << "\n";
                 }else{
-                    // characters 0-5: score with zero padding
-                    // if(score < 40){
-                    //     for (int i = offsets[0]; i < offsets[1]; i++) {
-                    //         buffer[i + offsets[0]] = '0';
-                    //     }
-                    // }else{
+                    // client
                     int num_digits = 0;
                     int temp = score;
                     while(temp != 0){
@@ -566,34 +547,32 @@ int main(){
                         num_digits++;
                     }
                     for(int i = 0; i < offsets[1]; i++){
-                        buffer[i + offsets[0]] = '0';
+                        send[i + offsets[0]] = '0';
                     }
                     temp = score;
                     for (int i = offsets[1] - 1; i >= offsets[1] - 1 - num_digits + 1; i--) {
-                        buffer[i + offsets[0]] = std::to_string(temp % 10)[0] + '0';
+                        send[i + offsets[0]] = std::to_string(temp % 10)[0] + '0';
                         temp /= 10;
                     }
-                    // }
                     // character 6: tetromino shape
-                    buffer[offsets[1]] = current_tetromino.get_shape();
+                    send[offsets[1]] = current_tetromino.get_shape();
                     // characters 7-10: tetromino positions x
-                    current_tetromino.get_positions_x(&buffer[offsets[2]]);
+                    current_tetromino.get_positions_x(&send[offsets[2]]);
                     // characters 11-14: tetromino positions y
-                    current_tetromino.get_positions_y(&buffer[offsets[3]]);
+                    current_tetromino.get_positions_y(&send[offsets[3]]);
                     // characters 15-214: game matrix
                     for(int i = 0; i < WINDOW_WIDTH * WINDOW_HEIGHT; i++){
-                        buffer[i + offsets[4]] = matrix[i % WINDOW_WIDTH][int(i / WINDOW_WIDTH)];
+                        send[i + offsets[4]] = matrix[i % WINDOW_WIDTH][int(i / WINDOW_WIDTH)];
                     }
-
-
-
-                    if(client.sendMessage(buffer)){
+                    if(client.sendMessage(send)){
                         std::cout << "Message to server: ";
-                        for(int i = 0; i <= offsets[4]; i++){
-                            std::cout << buffer[i];
+                        for(int i = 0; i < offsets[5]; i++){
+                            std::cout << send[i];
                         }
                         std::cout << "\n";
                     }
+
+                    
                 }
 
                 lag -= FRAME_DURATION;
