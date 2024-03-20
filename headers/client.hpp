@@ -22,6 +22,7 @@ public:
     bool connectToServer();
     bool sendMessage(const char* message);
     bool receiveResponse(char* buffer, int buffer_size);
+    int get_sockfd();
 };
 
 #endif

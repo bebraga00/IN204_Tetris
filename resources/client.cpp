@@ -57,4 +57,8 @@ bool Client::receiveResponse(char* buffer, int buffer_size) {
     return true;
 }
 
+int Client::get_sockfd(){
+    return this->sockfd;
+}
+
 #endif
