@@ -47,34 +47,12 @@ void Server::start(){
     }
 
     std::cout << "Connection accepted from " << inet_ntoa(clientAddr.sin_addr) << ":" << ntohs(clientAddr.sin_port) << "\n";
-
-    // Handle client communication
-    // handleClient();
 }
 
 Server::~Server() {
     // Close sockets
     close(clientSocket);
     close(serverSocket);
-}
-
-void Server::handleClient() {
-    char buffer[1024] = {0};
-    int valread;
-
-    while (true) {
-        // Receive data from client
-        valread = read(clientSocket, buffer, sizeof(buffer));
-        if (valread <= 0) {
-            std::cerr << "Error: Connection closed by client\n";
-            break;
-        }
-
-        std::cout << "Message from client: " << buffer << std::endl;
-
-        // Echo back to client
-        send(clientSocket, buffer, strlen(buffer), 0);
-    }
 }
 
 int Server::get_clientSocket(){

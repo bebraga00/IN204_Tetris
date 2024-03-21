@@ -4,7 +4,7 @@
 #include <netinet/in.h>
 
 class Server{
-    private:
+private:
     int serverSocket;
     int clientSocket;
     struct sockaddr_in serverAddr;
@@ -16,7 +16,6 @@ public:
     Server(int port);
     ~Server();
     void start();
-    void handleClient();
     int get_clientSocket();
 };
 

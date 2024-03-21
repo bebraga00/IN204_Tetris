@@ -46,17 +46,6 @@ bool Client::sendMessage(const char* message) {
     return true;
 }
 
-bool Client::receiveResponse(char* buffer, int buffer_size) {
-    // Receive response from server
-    int bytes_received = recv(sockfd, buffer, buffer_size, 0);
-    if (bytes_received == -1) {
-        std::cerr << "Error receiving response" << std::endl;
-        return false;
-    }
-    buffer[bytes_received] = '\0'; // Null-terminate the received data
-    return true;
-}
-
 int Client::get_sockfd(){
     return this->sockfd;
 }

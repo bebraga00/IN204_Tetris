@@ -1,5 +1,5 @@
 #include <SFML/Graphics.hpp>
-// #include <SFML/Audio.hpp>
+#include <SFML/Audio.hpp>
 #include <random>
 #include <time.h>
 #include <unistd.h>
@@ -219,13 +219,13 @@ void display_score(sf::Text& text, int score, int high_score, sf::RenderWindow& 
     window.draw(text);
 }
 
-void draw_black_override_backgroud(sf::RenderWindow& window){
+void draw_black_override_backgroud(sf::RenderWindow& window, int view_width){
     sf::RectangleShape new_cell(sf::Vector2f(PIXELS_PER_CELL, PIXELS_PER_CELL));
     new_cell.setFillColor(game_over_override);
     new_cell.setOutlineColor(game_over_override);
     
     for(int i = 0; i < (VIEW_HEIGHT / PIXELS_PER_CELL); i++){
-        for(int j = 0; j < (VIEW_WIDTH / PIXELS_PER_CELL); j++){
+        for(int j = 0; j < (view_width / PIXELS_PER_CELL); j++){
             new_cell.setPosition(i * PIXELS_PER_CELL, j * PIXELS_PER_CELL);
             window.draw(new_cell);
         }
@@ -233,7 +233,7 @@ void draw_black_override_backgroud(sf::RenderWindow& window){
 }
 
 void draw_pause_screen(sf::RenderWindow& window, sf::Text& text, int current_view_width){
-    draw_black_override_backgroud(window);
+    draw_black_override_backgroud(window, VIEW_WIDTH);
 
     text.setPosition(int((current_view_width - 4 * PIXELS_PER_CELL) / 2), int(VIEW_HEIGHT * 0.5));
     text.setString("PAUSE");
@@ -242,10 +242,10 @@ void draw_pause_screen(sf::RenderWindow& window, sf::Text& text, int current_vie
 }
 
 void draw_game_over_screen(sf::RenderWindow& window, sf::Text& text, int score, int highscore){
-    draw_black_override_backgroud(window);
+    draw_black_override_backgroud(window, VIEW_WIDTH);
 
-    text.setPosition((int(VIEW_WIDTH * 0.33)), int(VIEW_HEIGHT * 0.5));
-    text.setString("GAME OVER");
+    text.setPosition((int(VIEW_WIDTH * 0.15)), int(VIEW_HEIGHT * 0.5));
+    text.setString("GAME OVER - YOU LOST");
     window.draw(text);
     display_score(text, score, highscore, window);
     window.display();
@@ -287,6 +287,9 @@ int main(){
     bool already_moved = false;
     bool is_server = false;
     bool is_multiplayer = false;
+    bool already_sent = false;
+    bool already_printed_won = false;
+    char won = '0';
 
     // timer for the falling tetromino
     unsigned char current_fall_speed = START_FALL_SPEED;
@@ -335,32 +338,32 @@ int main(){
     text.setFillColor(font_color);            // text color
 
     // import game over sound
-    // sf::SoundBuffer sound_buffer;
-    // bool sound_loaded_properly = sound_buffer.loadFromFile("audio/game_over_sound.wav");
-    // if(!sound_loaded_properly){
-    //     std::cerr << "Error loading audio file" << std::endl;
-    //     exit(1);
-    // }
-    // sf::Sound game_over_sound;
-    // game_over_sound.setBuffer(sound_buffer);
+    sf::SoundBuffer sound_buffer;
+    bool sound_loaded_properly = sound_buffer.loadFromFile("audio/game_over_sound.wav");
+    if(!sound_loaded_properly){
+        std::cerr << "Error loading audio file" << std::endl;
+        exit(1);
+    }
+    sf::Sound game_over_sound;
+    game_over_sound.setBuffer(sound_buffer);
 
     // import the music
-    // sf::Music main_music;
-    // bool music_loaded_properly = main_music.openFromFile("audio/main_music.wav");
-    // if(!music_loaded_properly){
-    //     std::cerr << "Error loading audio file" << std::endl;
-    //     exit(1);
-    // }
-    // main_music.setLoop(true);
+    sf::Music main_music;
+    bool music_loaded_properly = main_music.openFromFile("audio/main_music.wav");
+    if(!music_loaded_properly){
+        std::cerr << "Error loading audio file" << std::endl;
+        exit(1);
+    }
+    main_music.setLoop(true);
 
     // import the music
-    // sf::Music title_music;
-    // music_loaded_properly = title_music.openFromFile("audio/title_music.wav");
-    // if(!music_loaded_properly){
-    //     std::cerr << "Error loading audio file" << std::endl;
-    //     exit(1);
-    // }
-    // title_music.setLoop(true);
+    sf::Music title_music;
+    music_loaded_properly = title_music.openFromFile("audio/title_music.wav");
+    if(!music_loaded_properly){
+        std::cerr << "Error loading audio file" << std::endl;
+        exit(1);
+    }
+    title_music.setLoop(true);
 
     // the random seed to generate the tetrominos
     srand(time(0));
@@ -388,8 +391,8 @@ int main(){
         if(event.type == sf::Event::KeyPressed){
             // singleplayer
             if(event.key.code == sf::Keyboard::Key::Num1){
-                // title_music.stop();
-                // main_music.play();
+                title_music.stop();
+                main_music.play();
                 break;
             // multiplayer
             }else if(event.key.code == sf::Keyboard::Key::Num2){
@@ -513,123 +516,121 @@ int main(){
 
             // if we have surpassed the frame duration, we initiate our operations
             while(lag >= FRAME_DURATION){
-                if(is_server){
-                    if(read(server.get_clientSocket(), buffer, sizeof(buffer)) == -1){
-                        std::cerr << "Error: Read failed\n";
-                        return 1;
-                    }
-                    // decode each variable in the buffer
-                    opponent_score = (buffer[0] - '0') * 100000 + (buffer[1] - '0') * 100000 + (buffer[2] - '0') * 1000 + (buffer[3] - '0') * 100 + (buffer[4] - '0') * 10 + (buffer[5] - '0') * 1;
-                    opponent_tetromino_shape = buffer[offsets[1]];
-                    opponent_tetromino_x[0] = buffer[offsets[2] + 0];
-                    opponent_tetromino_x[1] = buffer[offsets[2] + 1];
-                    opponent_tetromino_x[2] = buffer[offsets[2] + 2];
-                    opponent_tetromino_x[3] = buffer[offsets[2] + 3];
-                    opponent_tetromino_y[0] = buffer[offsets[3] + 0];
-                    opponent_tetromino_y[1] = buffer[offsets[3] + 1];
-                    opponent_tetromino_y[2] = buffer[offsets[3] + 2];
-                    opponent_tetromino_y[3] = buffer[offsets[3] + 3];
-                    for(int i = 0; i < WINDOW_HEIGHT *  WINDOW_WIDTH; i++){
-                        opponent_matrix[i % WINDOW_WIDTH][int(i / WINDOW_WIDTH)] = buffer[i + offsets[4]];
-                    }
+                // if(is_server){
+                //     if(read(server.get_clientSocket(), buffer, sizeof(buffer)) == -1){
+                //         std::cerr << "Error: Read failed\n";
+                //         return 1;
+                //     }
+                //     // decode each variable in the buffer
+                //     for(int i = 0; i < 6; i++){
+                //         std::cout << buffer[i];
+                //     }
+                //     std::cout << "\n";
+                //     opponent_score = (buffer[0] - '0') * 100000 + (buffer[1] - '0') * 10000 + (buffer[2] - '0') * 1000 + (buffer[3] - '0') * 100 + (buffer[4] - '0') * 10 + (buffer[5] - '0') * 1;
+                //     opponent_tetromino_shape = buffer[offsets[1]];
+                //     opponent_tetromino_x[0] = buffer[offsets[2] + 0];
+                //     opponent_tetromino_x[1] = buffer[offsets[2] + 1];
+                //     opponent_tetromino_x[2] = buffer[offsets[2] + 2];
+                //     opponent_tetromino_x[3] = buffer[offsets[2] + 3];
+                //     opponent_tetromino_y[0] = buffer[offsets[3] + 0];
+                //     opponent_tetromino_y[1] = buffer[offsets[3] + 1];
+                //     opponent_tetromino_y[2] = buffer[offsets[3] + 2];
+                //     opponent_tetromino_y[3] = buffer[offsets[3] + 3];
+                //     for(int i = 0; i < WINDOW_HEIGHT *  WINDOW_WIDTH; i++){
+                //         opponent_matrix[i % WINDOW_WIDTH][int(i / WINDOW_WIDTH)] = buffer[i + offsets[4]];
+                //     }
+                //     won = buffer[offsets[5]];
 
-                    std::cout << "Message received: ";
-                    for(int i = 0; i < offsets[5]; i++){
-                        std::cout << buffer[i];
-                    }
-                    std::cout << "\n";
+                //     std::cout << "Message received: ";
+                //     for(int i = 0; i <= offsets[5]; i++){
+                //         std::cout << buffer[i];
+                //     }
+                //     std::cout << "\n";
 
-                    int num_digits = 0;
-                    int temp = score;
-                    while(temp != 0){
-                        temp /= 10;
-                        num_digits++;
-                    }
-                    for(int i = 0; i < offsets[1]; i++){
-                        send_buffer[i + offsets[0]] = '0';
-                    }
-                    temp = score;
-                    for (int i = offsets[1] - 1; i >= offsets[1] - 1 - num_digits + 1; i--) {
-                        send_buffer[i + offsets[0]] = std::to_string(temp % 10)[0] + '0';
-                        temp /= 10;
-                    }
-                    // character 6: tetromino shape
-                    send_buffer[offsets[1]] = current_tetromino.get_shape();
-                    // characters 7-10: tetromino positions x
-                    current_tetromino.get_positions_x(&send_buffer[offsets[2]]);
-                    // characters 11-14: tetromino positions y
-                    current_tetromino.get_positions_y(&send_buffer[offsets[3]]);
-                    // characters 15-214: game matrix
-                    for(int i = 0; i < WINDOW_WIDTH * WINDOW_HEIGHT; i++){
-                        send_buffer[i + offsets[4]] = matrix[i % WINDOW_WIDTH][int(i / WINDOW_WIDTH)];
-                    }
-                    // std::cout << "aaa" << std::endl;
-                    // if(client.sendMessage(send_buffer)){
-                    //     std::cout << "Message to client: ";
-                    //     for(int i = 0; i < offsets[5]; i++){
-                    //         std::cout << send_buffer[i];
-                    //     }
-                    //     std::cout << "\n";
-                    // }
-                    if (send(server.get_clientSocket(), send_buffer, LEN_BUFFER, 0) == -1){
-                        std::cerr << "Error sending message" << std::endl;
-                        return false;
-                    }
+                //     int num_digits = 0;
+                //     int temp = score;
+                //     while(temp != 0){
+                //         temp /= 10;
+                //         num_digits++;
+                //     }
+                //     for(int i = 0; i < offsets[1]; i++){
+                //         send_buffer[i + offsets[0]] = '0';
+                //     }
+                //     temp = score;
+                //     for (int i = offsets[1] - 1; i >= offsets[1] - 1 - num_digits + 1; i--) {
+                //         send_buffer[i + offsets[0]] = std::to_string(temp % 10)[0];
+                //         temp /= 10;
+                //     }
+                //     // character 6: tetromino shape
+                //     send_buffer[offsets[1]] = current_tetromino.get_shape();
+                //     // characters 7-10: tetromino positions x
+                //     current_tetromino.get_positions_x(&send_buffer[offsets[2]]);
+                //     // characters 11-14: tetromino positions y
+                //     current_tetromino.get_positions_y(&send_buffer[offsets[3]]);
+                //     // characters 15-214: game matrix
+                //     for(int i = 0; i < WINDOW_WIDTH * WINDOW_HEIGHT; i++){
+                //         send_buffer[i + offsets[4]] = matrix[i % WINDOW_WIDTH][int(i / WINDOW_WIDTH)];
+                //     }
+                //     if (send(server.get_clientSocket(), send_buffer, LEN_BUFFER, 0) == -1){
+                //         std::cerr << "Error sending message" << std::endl;
+                //         return false;
+                //     }
 
-                }else{
-                    // client
-                    int num_digits = 0;
-                    int temp = score;
-                    while(temp != 0){
-                        temp /= 10;
-                        num_digits++;
-                    }
-                    for(int i = 0; i < offsets[1]; i++){
-                        send_buffer[i + offsets[0]] = '0';
-                    }
-                    temp = score;
-                    for (int i = offsets[1] - 1; i >= offsets[1] - 1 - num_digits + 1; i--) {
-                        send_buffer[i + offsets[0]] = std::to_string(temp % 10)[0] + '0';
-                        temp /= 10;
-                    }
-                    // character 6: tetromino shape
-                    send_buffer[offsets[1]] = current_tetromino.get_shape();
-                    // characters 7-10: tetromino positions x
-                    current_tetromino.get_positions_x(&send_buffer[offsets[2]]);
-                    // characters 11-14: tetromino positions y
-                    current_tetromino.get_positions_y(&send_buffer[offsets[3]]);
-                    // characters 15-214: game matrix
-                    for(int i = 0; i < WINDOW_WIDTH * WINDOW_HEIGHT; i++){
-                        send_buffer[i + offsets[4]] = matrix[i % WINDOW_WIDTH][int(i / WINDOW_WIDTH)];
-                    }
-                    // send message
-                    if(client.sendMessage(send_buffer)){
-                        std::cout << "Message to server: ";
-                        for(int i = 0; i < offsets[5]; i++){
-                            std::cout << send_buffer[i];
-                        }
-                        std::cout << "\n";
-                    }
-                    // receive message
-                    if(read(client.get_sockfd(), buffer, sizeof(buffer)) == -1){
-                        std::cerr << "Error: Read failed\n";
-                        return 1;
-                    }
-                    // decode the variables in the buffer
-                    opponent_score = (buffer[0] - '0') * 100000 + (buffer[1] - '0') * 100000 + (buffer[2] - '0') * 1000 + (buffer[3] - '0') * 100 + (buffer[4] - '0') * 10 + (buffer[5] - '0') * 1;
-                    opponent_tetromino_shape = buffer[offsets[1]];
-                    opponent_tetromino_x[0] = buffer[offsets[2] + 0];
-                    opponent_tetromino_x[1] = buffer[offsets[2] + 1];
-                    opponent_tetromino_x[2] = buffer[offsets[2] + 2];
-                    opponent_tetromino_x[3] = buffer[offsets[2] + 3];
-                    opponent_tetromino_y[0] = buffer[offsets[3] + 0];
-                    opponent_tetromino_y[1] = buffer[offsets[3] + 1];
-                    opponent_tetromino_y[2] = buffer[offsets[3] + 2];
-                    opponent_tetromino_y[3] = buffer[offsets[3] + 3];
-                    for(int i = 0; i < WINDOW_HEIGHT *  WINDOW_WIDTH; i++){
-                        opponent_matrix[i % WINDOW_WIDTH][int(i / WINDOW_WIDTH)] = buffer[i + offsets[4]];
-                    }
-                }
+                // }else{
+                //     // client
+                //     int num_digits = 0;
+                //     int temp = score;
+                //     while(temp != 0){
+                //         temp /= 10;
+                //         num_digits++;
+                //     }
+                //     for(int i = 0; i < offsets[1]; i++){
+                //         send_buffer[i + offsets[0]] = '0';
+                //     }
+                //     temp = score;
+                //     for (int i = offsets[1] - 1; i >= offsets[1] - 1 - num_digits + 1; i--) {
+                //         send_buffer[i + offsets[0]] = std::to_string(temp % 10)[0];
+                //         temp /= 10;
+                //     }
+                //     // character 6: tetromino shape
+                //     send_buffer[offsets[1]] = current_tetromino.get_shape();
+                //     // characters 7-10: tetromino positions x
+                //     current_tetromino.get_positions_x(&send_buffer[offsets[2]]);
+                //     // characters 11-14: tetromino positions y
+                //     current_tetromino.get_positions_y(&send_buffer[offsets[3]]);
+                //     // characters 15-214: game matrix
+                //     for(int i = 0; i < WINDOW_WIDTH * WINDOW_HEIGHT; i++){
+                //         send_buffer[i + offsets[4]] = matrix[i % WINDOW_WIDTH][int(i / WINDOW_WIDTH)];
+                //     }
+                //     // send message
+                //     if(client.sendMessage(send_buffer)){
+                //         std::cout << "Message to server: ";
+                //         for(int i = 0; i <= offsets[5]; i++){
+                //             std::cout << send_buffer[i];
+                //         }
+                //         std::cout << "\n";
+                //     }
+                //     // receive message
+                //     if(read(client.get_sockfd(), buffer, sizeof(buffer)) == -1){
+                //         std::cerr << "Error: Read failed\n";
+                //         return 1;
+                //     }
+                //     // decode the variables in the buffer
+                //     opponent_score = (buffer[0] - '0') * 100000 + (buffer[1] - '0') * 10000 + (buffer[2] - '0') * 1000 + (buffer[3] - '0') * 100 + (buffer[4] - '0') * 10 + (buffer[5] - '0') * 1;
+                //     opponent_tetromino_shape = buffer[offsets[1]];
+                //     opponent_tetromino_x[0] = buffer[offsets[2] + 0];
+                //     opponent_tetromino_x[1] = buffer[offsets[2] + 1];
+                //     opponent_tetromino_x[2] = buffer[offsets[2] + 2];
+                //     opponent_tetromino_x[3] = buffer[offsets[2] + 3];
+                //     opponent_tetromino_y[0] = buffer[offsets[3] + 0];
+                //     opponent_tetromino_y[1] = buffer[offsets[3] + 1];
+                //     opponent_tetromino_y[2] = buffer[offsets[3] + 2];
+                //     opponent_tetromino_y[3] = buffer[offsets[3] + 3];
+                //     for(int i = 0; i < WINDOW_HEIGHT *  WINDOW_WIDTH; i++){
+                //         opponent_matrix[i % WINDOW_WIDTH][int(i / WINDOW_WIDTH)] = buffer[i + offsets[4]];
+                //     }
+                //     won = buffer[offsets[5]];
+                // }
 
                 lag -= FRAME_DURATION;
 
@@ -754,12 +755,42 @@ int main(){
                 text.setPosition(((int(WINDOW_WIDTH * 1.2)) * PIXELS_PER_CELL), ((int(WINDOW_WIDTH * 0.1)) * PIXELS_PER_CELL)); // POSITION
                 std::string scoreString = std::to_string(score);
                 std::string opponentScoreString = std::to_string(opponent_score);    
-                text.setString("P1 SCORE\n" + std::string(6 - scoreString.length(), '0') + scoreString + "\nP2 SCORE\n" + std::string(6 - opponentScoreString.length(), '0') + opponentScoreString);
+                text.setString("SCORE\n" + std::string(6 - scoreString.length(), '0') + scoreString + "\nOPPONENT\n" + std::string(6 - opponentScoreString.length(), '0') + opponentScoreString);
                 window_multiplayer.draw(text);
 
                 display_next_shape_text(text, window_multiplayer);
 
                 window_multiplayer.display();
+
+                if(won == '1'){
+                    already_printed_won = true;
+                    draw_black_override_backgroud(window_multiplayer, VIEW_WIDTH);
+
+                    text.setPosition((int(VIEW_WIDTH * 0.15)), int(VIEW_HEIGHT * 0.5));
+                    text.setString("GAME OVER - YOU WON");
+                    window_multiplayer.draw(text);
+                    display_score(text, score, highscore, window);
+                    window_multiplayer.display();
+
+                    sleep(2.5);
+                    text.setString("PRESS ANY KEY TO CONTINUE");
+                    text.setPosition(((int(WINDOW_WIDTH * 0.15)) * PIXELS_PER_CELL), int(VIEW_HEIGHT * 0.6));
+                    window_multiplayer.draw(text);
+                    window_multiplayer.display();
+                    
+                    while(1){
+                        window_multiplayer.pollEvent(event);
+                        if(event.type == sf::Event::KeyPressed){
+                            window_multiplayer.close();
+                            break;
+                        }else if(event.type == sf::Event::Closed){
+                            window_multiplayer.close();
+                            break;
+                        }   
+                    }
+
+                    break;
+                }
                 
                 if(fall_timer == current_fall_speed){
                     fall_timer = 0;
@@ -827,9 +858,47 @@ int main(){
                         if(current_tetromino.reset(next_tetromino.get_shape(), matrix) == 0){
                             // main_music.stop();
                             // game_over_sound.play();
-                            save_highscore(score, highscore);
-                            draw_game_over_screen(window_multiplayer, text, score, highscore);
-                            
+                            // save_highscore(score, highscore);aaaaa
+
+                            draw_black_override_backgroud(window_multiplayer, VIEW_WIDTH);
+
+                            text.setPosition((int(VIEW_WIDTH * 0.15)), int(VIEW_HEIGHT * 0.5));
+                            text.setString("GAME OVER - YOU LOST");
+                            window_multiplayer.draw(text);
+
+                            text.setPosition(((int(WINDOW_WIDTH * 1.2)) * PIXELS_PER_CELL), ((int(WINDOW_WIDTH * 0.1)) * PIXELS_PER_CELL)); // POSITION
+                            std::string scoreString = std::to_string(score);
+                            std::string opponentScoreString = std::to_string(opponent_score);    
+                            text.setString("SCORE\n" + std::string(6 - scoreString.length(), '0') + scoreString + "\nOPPONENT\n" + std::string(6 - opponentScoreString.length(), '0') + opponentScoreString);
+                            window_multiplayer.draw(text);
+
+                            window_multiplayer.display();
+
+                            sleep(2.5);
+                            text.setString("PRESS ANY KEY TO CONTINUE");
+                            text.setPosition(((int(WINDOW_WIDTH * 0.15)) * PIXELS_PER_CELL), int(VIEW_HEIGHT * 0.6));
+                            window_multiplayer.draw(text);
+                            window_multiplayer.display();
+
+
+                            // send buffer to end the game
+                            send_buffer[offsets[5]] = '1';
+                            already_sent = true;
+                            if(is_server){
+                                if (send(server.get_clientSocket(), send_buffer, LEN_BUFFER, 0) == -1){
+                                    std::cerr << "Error sending message" << std::endl;
+                                    return false;
+                                }
+                            }else{
+                                if(client.sendMessage(send_buffer)){
+                                    std::cout << "Message to server: ";
+                                    for(int i = 0; i <= offsets[5]; i++){
+                                        std::cout << send_buffer[i];
+                                    }
+                                    std::cout << "\n";
+                                }
+                            }
+
                             // detect any key press
                             while(1){
                                 window_multiplayer.pollEvent(event);
@@ -845,8 +914,131 @@ int main(){
                     }
                 }else{
                     fall_timer++;
-                }           
+                }     
+                // HERE
+                if(!already_sent){
+                    if(is_server){
+                        if(read(server.get_clientSocket(), buffer, sizeof(buffer)) == -1){
+                            std::cerr << "Error: Read failed\n";
+                            return 1;
+                        }
+                        // decode each variable in the buffer
+                        for(int i = 0; i < 6; i++){
+                            std::cout << buffer[i];
+                        }
+                        std::cout << "\n";
+                        opponent_score = (buffer[0] - '0') * 100000 + (buffer[1] - '0') * 10000 + (buffer[2] - '0') * 1000 + (buffer[3] - '0') * 100 + (buffer[4] - '0') * 10 + (buffer[5] - '0') * 1;
+                        opponent_tetromino_shape = buffer[offsets[1]];
+                        opponent_tetromino_x[0] = buffer[offsets[2] + 0];
+                        opponent_tetromino_x[1] = buffer[offsets[2] + 1];
+                        opponent_tetromino_x[2] = buffer[offsets[2] + 2];
+                        opponent_tetromino_x[3] = buffer[offsets[2] + 3];
+                        opponent_tetromino_y[0] = buffer[offsets[3] + 0];
+                        opponent_tetromino_y[1] = buffer[offsets[3] + 1];
+                        opponent_tetromino_y[2] = buffer[offsets[3] + 2];
+                        opponent_tetromino_y[3] = buffer[offsets[3] + 3];
+                        for(int i = 0; i < WINDOW_HEIGHT *  WINDOW_WIDTH; i++){
+                            opponent_matrix[i % WINDOW_WIDTH][int(i / WINDOW_WIDTH)] = buffer[i + offsets[4]];
+                        }
+                        won = buffer[offsets[5]];
+
+                        std::cout << "Message received: ";
+                        for(int i = 0; i <= offsets[5]; i++){
+                            std::cout << buffer[i];
+                        }
+                        std::cout << "\n";
+
+                        int num_digits = 0;
+                        int temp = score;
+                        while(temp != 0){
+                            temp /= 10;
+                            num_digits++;
+                        }
+                        for(int i = 0; i < offsets[1]; i++){
+                            send_buffer[i + offsets[0]] = '0';
+                        }
+                        temp = score;
+                        for (int i = offsets[1] - 1; i >= offsets[1] - 1 - num_digits + 1; i--) {
+                            send_buffer[i + offsets[0]] = std::to_string(temp % 10)[0];
+                            temp /= 10;
+                        }
+                        // character 6: tetromino shape
+                        send_buffer[offsets[1]] = current_tetromino.get_shape();
+                        // characters 7-10: tetromino positions x
+                        current_tetromino.get_positions_x(&send_buffer[offsets[2]]);
+                        // characters 11-14: tetromino positions y
+                        current_tetromino.get_positions_y(&send_buffer[offsets[3]]);
+                        // characters 15-214: game matrix
+                        for(int i = 0; i < WINDOW_WIDTH * WINDOW_HEIGHT; i++){
+                            send_buffer[i + offsets[4]] = matrix[i % WINDOW_WIDTH][int(i / WINDOW_WIDTH)];
+                        }
+                        if (send(server.get_clientSocket(), send_buffer, LEN_BUFFER, 0) == -1){
+                            std::cerr << "Error sending message" << std::endl;
+                            return false;
+                        }
+
+                    }else{
+                        // client
+                        int num_digits = 0;
+                        int temp = score;
+                        while(temp != 0){
+                            temp /= 10;
+                            num_digits++;
+                        }
+                        for(int i = 0; i < offsets[1]; i++){
+                            send_buffer[i + offsets[0]] = '0';
+                        }
+                        temp = score;
+                        for (int i = offsets[1] - 1; i >= offsets[1] - 1 - num_digits + 1; i--) {
+                            send_buffer[i + offsets[0]] = std::to_string(temp % 10)[0];
+                            temp /= 10;
+                        }
+                        // character 6: tetromino shape
+                        send_buffer[offsets[1]] = current_tetromino.get_shape();
+                        // characters 7-10: tetromino positions x
+                        current_tetromino.get_positions_x(&send_buffer[offsets[2]]);
+                        // characters 11-14: tetromino positions y
+                        current_tetromino.get_positions_y(&send_buffer[offsets[3]]);
+                        // characters 15-214: game matrix
+                        for(int i = 0; i < WINDOW_WIDTH * WINDOW_HEIGHT; i++){
+                            send_buffer[i + offsets[4]] = matrix[i % WINDOW_WIDTH][int(i / WINDOW_WIDTH)];
+                        }
+                        // send message
+                        if(client.sendMessage(send_buffer)){
+                            std::cout << "Message to server: ";
+                            for(int i = 0; i <= offsets[5]; i++){
+                                std::cout << send_buffer[i];
+                            }
+                            std::cout << "\n";
+                        }
+                        // receive message
+                        if(read(client.get_sockfd(), buffer, sizeof(buffer)) == -1){
+                            std::cerr << "Error: Read failed\n";
+                            return 1;
+                        }
+                        // decode the variables in the buffer
+                        opponent_score = (buffer[0] - '0') * 100000 + (buffer[1] - '0') * 10000 + (buffer[2] - '0') * 1000 + (buffer[3] - '0') * 100 + (buffer[4] - '0') * 10 + (buffer[5] - '0') * 1;
+                        opponent_tetromino_shape = buffer[offsets[1]];
+                        opponent_tetromino_x[0] = buffer[offsets[2] + 0];
+                        opponent_tetromino_x[1] = buffer[offsets[2] + 1];
+                        opponent_tetromino_x[2] = buffer[offsets[2] + 2];
+                        opponent_tetromino_x[3] = buffer[offsets[2] + 3];
+                        opponent_tetromino_y[0] = buffer[offsets[3] + 0];
+                        opponent_tetromino_y[1] = buffer[offsets[3] + 1];
+                        opponent_tetromino_y[2] = buffer[offsets[3] + 2];
+                        opponent_tetromino_y[3] = buffer[offsets[3] + 3];
+                        for(int i = 0; i < WINDOW_HEIGHT *  WINDOW_WIDTH; i++){
+                            opponent_matrix[i % WINDOW_WIDTH][int(i / WINDOW_WIDTH)] = buffer[i + offsets[4]];
+                        }
+                        won = buffer[offsets[5]];
+                    }      
+                }
             }
+            if(won == '1' && already_printed_won){
+                std::cout << "Here";
+                break;
+            }
+            // TO HERE
         }
     }
     else{
@@ -1036,11 +1228,10 @@ int main(){
 
                         // if we can't reset, the game is over
                         if(current_tetromino.reset(next_tetromino.get_shape(), matrix) == 0){
-                            // main_music.stop();
-                            // game_over_sound.play();
+                            main_music.stop();
+                            game_over_sound.play();
                             save_highscore(score, highscore);
                             draw_game_over_screen(window, text, score, highscore);
-                            
                             // detect any key press
                             while(1){
                                 window.pollEvent(event);
